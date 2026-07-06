@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cooperativa Financiera — Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0c0e14 0%, #0f172a 50%, #064e3b 100%);
+      color: #e8eaef; min-height: 100vh; padding: 2rem;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .sub { color: #8b93a7; margin-bottom: 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; }
+    .card {
+      background: #1a1f2b; border: 1px solid #2a3142; border-radius: 14px;
+      padding: 1.5rem; transition: border-color 0.2s;
+    }
+    .card:hover { border-color: #10b981; }
+    .card h2 { font-size: 1.15rem; margin-bottom: 0.5rem; color: #10b981; }
+    .card p { font-size: 0.9rem; color: #8b93a7; margin-bottom: 1rem; line-height: 1.5; }
+    a.btn {
+      display: inline-block; padding: 0.6rem 1.2rem; background: #10b981;
+      color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+    }
+    a.btn:hover { background: #059669; }
+    .api { margin-top: 2rem; }
+    .api h2 { margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.6rem; text-align: left; border-bottom: 1px solid #2a3142; }
+    th { color: #8b93a7; font-size: 0.75rem; text-transform: uppercase; }
+    code { background: #141820; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.8rem; }
+    .tip {
+      margin-top: 2rem; padding: 1rem 1.25rem; background: rgba(16,185,129,0.1);
+      border: 1px solid #10b981; border-radius: 10px; font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Cooperativa Financiera</h1>
+    <p class="sub">Demo capa de aplicación y presentación — Abra DevTools (F12) → pestaña Network antes de iniciar sesión</p>
+
+    <div class="grid">
+      <div class="card">
+        <h2>Banca Web</h2>
+        <p>Canal socios — React + TypeScript. Login, saldos, transferencias y préstamos.</p>
+        <p><strong>DNI:</strong> 45678901 · <strong>PIN:</strong> 8901</p>
+        <a class="btn" href="/web/">Abrir Banca Web</a>
+      </div>
+      <div class="card">
+        <h2>Dashboard Gerencial SBS</h2>
+        <p>Panel administrativo — auditoría normativa, métricas Core y contingencia.</p>
+        <p><strong>Usuario:</strong> auditor · <strong>Pass:</strong> Coop2026!</p>
+        <a class="btn" href="/dashboard/">Abrir Dashboard</a>
+      </div>
+      <div class="card">
+        <h2>Lab de Simulación</h2>
+        <p>Pruebas de conectividad y transferencia de datos — capa de presentación (servidor web). No afecta Banca Web ni Dashboard.</p>
+        <a class="btn" href="/lab/">Abrir Laboratorio</a>
+      </div>
+      <div class="card">
+        <p>Prometheus — métricas pg_up, alertas de failover del Core bancario.</p>
+        <a class="btn" href="http://localhost:9090" target="_blank">Prometheus :9090</a>
+      </div>
+      <div class="card">
+        <h2>Administración BD</h2>
+        <p>pgAdmin — ERD y consultas al schema core_bancario.</p>
+        <a class="btn" href="http://localhost:8080" target="_blank">pgAdmin :8080</a>
+      </div>
+    </div>
+
+    <div class="api">
+      <h2>Endpoints API (visible en Network)</h2>
+      <table>
+        <thead><tr><th>Método</th><th>Ruta</th><th>Módulo</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/api/v1/auth/socio/login</code></td><td>Gateway — Banca Web</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/auth/login</code></td><td>Gateway — Dashboard</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/cuentas/cuentas/socio/{id}</code></td><td>Cuentas y transacciones</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/cuentas/transacciones/transferencia</code></td><td>Cuentas y transacciones</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/prestamos/prestamos/solicitar</code></td><td>Scoring préstamos</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/auditoria/logs</code></td><td>Auditoría SBS 504-2021</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/sync/estado/core</code></td><td>Resiliencia y contingencia</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/sync/diagnostico/conectividad</code></td><td>Simulación — conectividad arquitectura</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/sync/diagnostico/transferencia</code></td><td>Simulación — transferencia de datos</td></tr>
+          <tr><td>GET</td><td><code>/api/v1/sync/estado/prometheus</code></td><td>Métricas Prometheus</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip">
+      <strong>Flujo demo sugerido:</strong> 1) Login Banca Web → ver cuentas en Network.
+      2) Transferencia o préstamo. 3) Login Dashboard → ver logs de auditoría y estado del Core.
+      4) Opcional: <code>docker stop core-db</code> → refrescar Dashboard para ver failover.
+    </div>
+  </div>
+</body>
+</html>

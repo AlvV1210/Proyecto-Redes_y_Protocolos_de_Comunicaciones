@@ -10,6 +10,8 @@ from coop_shared.database import get_db
 from coop_shared.deps import ROLES_ADMIN, require_roles
 from coop_shared.schemas import EstadoCoreResponse, EstadoPrometheusResponse, TokenPayload
 
+from app.diagnostico import ejecutar_conectividad, ejecutar_transferencia
+
 app = FastAPI(title="Sync y Resiliencia", version="1.0.0", root_path="/api/v1/sync")
 
 app.add_middleware(
@@ -31,9 +33,21 @@ async def health():
     return {"status": "ok", "service": "sync-svc"}
 
 
+@app.get("/diagnostico/conectividad")
+async def diagnostico_conectividad():
+    """Simulación: prueba de conectividad de toda la arquitectura (sin autenticación)."""
+    return await ejecutar_conectividad()
+
+
+@app.post("/diagnostico/transferencia")
+async def diagnostico_transferencia(via_gateway: bool = True):
+    """Simulación: prueba de transferencia de datos por el servidor web y capas internas."""
+    return await ejecutar_transferencia(via_gateway=via_gateway)
+
+
 @app.get("/estado/core", response_model=EstadoCoreResponse)
 async def estado_core(
-    _: TokenPayload = Depends(require_roles(*ROLES_ADMIN)),
+    _: TokenPayload = Depends(require_roles(*ROLES_ADMIN, "AUDITOR")),
     db: AsyncSession = Depends(get_db),
 ):
     try:

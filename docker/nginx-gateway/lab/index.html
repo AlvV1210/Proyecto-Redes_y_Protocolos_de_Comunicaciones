@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab — Simulación Capa de Presentación</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Consolas', 'Segoe UI', monospace;
+      background: #0a0c10; color: #c9d1d9; min-height: 100vh; padding: 1.5rem;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; color: #58a6ff; font-family: 'Segoe UI', sans-serif; }
+    .sub { color: #8b949e; font-size: 0.85rem; margin: 0.4rem 0 1.5rem; font-family: 'Segoe UI', sans-serif; }
+    .badge { display: inline-block; padding: 0.2rem 0.6rem; background: #21262d; border: 1px solid #30363d;
+      border-radius: 20px; font-size: 0.72rem; color: #8b949e; margin-bottom: 1rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.25rem; }
+    button {
+      padding: 0.6rem 1.1rem; border: 1px solid #30363d; border-radius: 8px; cursor: pointer;
+      font-size: 0.85rem; font-weight: 600; background: #21262d; color: #c9d1d9;
+    }
+    button.primary { background: #238636; border-color: #2ea043; color: #fff; }
+    button.primary:hover { background: #2ea043; }
+    button:hover { border-color: #58a6ff; }
+    button:disabled { opacity: 0.5; cursor: wait; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    .panel {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem;
+    }
+    .panel h2 { font-size: 0.8rem; text-transform: uppercase; color: #8b949e; margin-bottom: 0.75rem;
+      font-family: 'Segoe UI', sans-serif; }
+    .arch {
+      display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;
+    }
+    .layer { padding: 0.6rem; border-radius: 6px; border: 1px solid #21262d; }
+    .layer-title { font-weight: 700; color: #58a6ff; margin-bottom: 0.35rem; font-size: 0.75rem; }
+    .node { display: flex; justify-content: space-between; padding: 0.25rem 0; border-bottom: 1px solid #161b22; }
+    .node:last-child { border: none; }
+    .ok { color: #3fb950; }
+    .fail { color: #f85149; }
+    .warn { color: #d29922; }
+    .pending { color: #8b949e; }
+    pre {
+      background: #010409; border: 1px solid #21262d; border-radius: 8px; padding: 0.75rem;
+      font-size: 0.72rem; overflow: auto; max-height: 420px; line-height: 1.45;
+    }
+    .summary {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem;
+    }
+    .metric { background: #161b22; border-radius: 8px; padding: 0.75rem; text-align: center; }
+    .metric .v { font-size: 1.5rem; font-weight: 700; }
+    .metric .l { font-size: 0.68rem; color: #8b949e; text-transform: uppercase; }
+    a { color: #58a6ff; }
+    .flow { font-size: 0.78rem; color: #8b949e; margin-top: 1rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Laboratorio de Simulación — Capa de Presentación</h1>
+    <p class="sub">
+      Pruebas de conectividad y transferencia de datos de la arquitectura.
+      No modifica Banca Web ni Dashboard Gerencial.
+    </p>
+    <span class="badge">Servidor web: nginx-gateway :80 · Endpoints visibles en DevTools → Network</span>
+
+    <div class="toolbar">
+      <button class="primary" id="btnConn">Ejecutar prueba de conectividad</button>
+      <button class="primary" id="btnXfer">Ejecutar transferencia de datos (vía nginx)</button>
+      <button id="btnXferDirect">Transferencia (red interna Docker)</button>
+      <a href="/" style="align-self:center;font-size:0.85rem;">← Portal demo</a>
+    </div>
+
+    <div class="summary" id="summary" style="display:none">
+      <div class="metric"><div class="v ok" id="mOk">—</div><div class="l">Nodos OK</div></div>
+      <div class="metric"><div class="v fail" id="mFail">—</div><div class="l">Fallos</div></div>
+      <div class="metric"><div class="v" id="mPct" style="color:#58a6ff">—</div><div class="l">% Éxito</div></div>
+      <div class="metric"><div class="v" id="mMs" style="color:#d29922">—</div><div class="l">Latencia total</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Mapa de arquitectura (estado en vivo)</h2>
+        <div class="arch" id="archMap">
+          <div class="layer">
+            <div class="layer-title">Capa Presentación — Servidor Web</div>
+            <div class="node"><span>nginx-gateway :80</span><span class="pending" id="st-nginx">—</span></div>
+            <div class="node"><span>banca-web /web/</span><span class="pending" id="st-banca">—</span></div>
+            <div class="node"><span>dashboard-sbs /dashboard/</span><span class="pending" id="st-dash">—</span></div>
+          </div>
+          <div class="layer">
+            <div class="layer-title">Capa Aplicación — Microservicios</div>
+            <div class="node"><span>gateway-auth</span><span class="pending" id="st-gw">—</span></div>
+            <div class="node"><span>cuentas-svc</span><span class="pending" id="st-cuentas">—</span></div>
+            <div class="node"><span>prestamos-svc</span><span class="pending" id="st-prestamos">—</span></div>
+            <div class="node"><span>auditoria-svc</span><span class="pending" id="st-auditoria">—</span></div>
+            <div class="node"><span>sync-svc</span><span class="pending" id="st-sync">—</span></div>
+          </div>
+          <div class="layer">
+            <div class="layer-title">Capa Datos</div>
+            <div class="node"><span>core-db PostgreSQL</span><span class="pending" id="st-core">—</span></div>
+            <div class="node"><span>replica-db</span><span class="pending" id="st-replica">—</span></div>
+            <div class="node"><span>contingencia-db MongoDB</span><span class="pending" id="st-mongo">—</span></div>
+            <div class="node"><span>redis</span><span class="pending" id="st-redis">—</span></div>
+            <div class="node"><span>prometheus</span><span class="pending" id="st-prom">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Respuesta JSON (Network → Fetch/XHR)</h2>
+        <pre id="output">Pulse un botón para iniciar la simulación…
+
+Endpoints:
+  GET  /api/v1/sync/diagnostico/conectividad
+  POST /api/v1/sync/diagnostico/transferencia
+  POST /api/v1/sync/diagnostico/transferencia?via_gateway=false</pre>
+      </div>
+    </div>
+
+    <div class="flow">
+      <strong>Flujo simulado (transferencia vía servidor web):</strong><br>
+      Navegador → nginx:80 → microservicio FastAPI → PostgreSQL Core → Réplica streaming → MongoDB contingencia<br>
+      <strong>Nota académica:</strong> Las interfaces de usuario (Banca Web, Dashboard) permanecen intactas;
+      este laboratorio opera en una ruta técnica separada (<code>/lab/</code>).
+    </div>
+  </div>
+
+  <script>
+    const API = '/api/v1/sync/diagnostico';
+    const out = document.getElementById('output');
+    const summary = document.getElementById('summary');
+
+    const nodeMap = {
+      'nginx-gateway': 'st-nginx',
+      'banca-web': 'st-banca',
+      'dashboard-sbs': 'st-dash',
+      'gateway-auth': 'st-gw',
+      'cuentas-svc': 'st-cuentas',
+      'prestamos-svc': 'st-prestamos',
+      'auditoria-svc': 'st-auditoria',
+      'sync-svc': 'st-sync',
+      'core-db': 'st-core',
+      'replica-db': 'st-replica',
+      'contingencia-db': 'st-mongo',
+      'redis': 'st-redis',
+      'prometheus': 'st-prom',
+    };
+
+    function setStatus(id, estado, ms) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const cls = estado === 'OK' ? 'ok' : estado === 'ADVERTENCIA' ? 'warn' : estado === 'FALLO' ? 'fail' : 'pending';
+      el.className = cls;
+      el.textContent = ms != null ? `${estado} (${ms}ms)` : estado;
+    }
+
+    function resetMap() {
+      Object.values(nodeMap).forEach(id => setStatus(id, '…'));
+      setStatus('st-nginx', 'OK', 0);
+    }
+
+    function paintConnectivity(data) {
+      resetMap();
+      ['presentacion', 'aplicacion', 'datos'].forEach(cap => {
+        (data.capas[cap]?.nodos || []).forEach(n => {
+          const id = nodeMap[n.nodo];
+          if (id) setStatus(id, n.estado, n.latencia_ms);
+        });
+      });
+      summary.style.display = 'grid';
+      document.getElementById('mOk').textContent = data.resumen.ok;
+      document.getElementById('mFail').textContent = data.resumen.fallo;
+      document.getElementById('mPct').textContent = data.resumen.porcentaje_ok + '%';
+      const totalMs = ['presentacion','aplicacion','datos'].flatMap(c => data.capas[c].nodos)
+        .reduce((s, n) => s + (n.latencia_ms || 0), 0);
+      document.getElementById('mMs').textContent = Math.round(totalMs) + 'ms';
+    }
+
+    function paintTransfer(data) {
+      summary.style.display = 'grid';
+      document.getElementById('mOk').textContent = data.resumen.pasos_ok;
+      document.getElementById('mFail').textContent = data.resumen.pasos_total - data.resumen.pasos_ok;
+      document.getElementById('mPct').textContent = data.resumen.bytes_http_acumulados + ' B';
+      document.getElementById('mMs').textContent = data.resumen.latencia_total_ms + 'ms';
+    }
+
+    async function run(btn, url, method, paint) {
+      btn.disabled = true;
+      out.textContent = 'Ejecutando… (ver pestaña Network)';
+      try {
+        const r = await fetch(url, { method });
+        const data = await r.json();
+        out.textContent = JSON.stringify(data, null, 2);
+        paint(data);
+      } catch (e) {
+        out.textContent = 'Error: ' + e.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('btnConn').onclick = () =>
+      run(document.getElementById('btnConn'), API + '/conectividad', 'GET', paintConnectivity);
+
+    document.getElementById('btnXfer').onclick = () =>
+      run(document.getElementById('btnXfer'), API + '/transferencia?via_gateway=true', 'POST', paintTransfer);
+
+    document.getElementById('btnXferDirect').onclick = () =>
+      run(document.getElementById('btnXferDirect'), API + '/transferencia?via_gateway=false', 'POST', paintTransfer);
+  </script>
+</body>
+</html>
