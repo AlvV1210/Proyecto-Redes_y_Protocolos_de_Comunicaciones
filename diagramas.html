@@ -1,0 +1,688 @@
+<!-- Header -->
+<header class="bg-indigo-900 text-white py-4 px-6 shadow-md flex justify-between items-center">
+    <div>
+        <h1 class="text-xl font-bold">Mejorador de Diagramas Arquitectónicos</h1>
+        <p class="text-xs text-indigo-200">Optimizado para informes académicos, tesis y presentaciones</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <span class="text-xs bg-indigo-800 px-3 py-1 rounded-full text-indigo-200 border border-indigo-700">Versión Académica</span>
+    </div>
+</header>
+
+<!-- Main Content Grid -->
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-4 overflow-hidden">
+    
+    <!-- Left Panel: Configuration & Editing -->
+    <aside class="bg-white border-r border-gray-200 p-6 flex flex-col gap-6 overflow-y-auto lg:col-span-1 shadow-inner">
+        <!-- 1. Diagram Selector -->
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Seleccionar Diagrama</label>
+            <div class="grid grid-cols-1 gap-2">
+                <button id="btn-diag-hibrida" onclick="switchDiagram('hibrida')" class="w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-indigo-600 bg-indigo-50 text-indigo-900 shadow-sm">
+                    1. Red Híbrida (arquitectura_general_hibrida.jpg)
+                </button>
+                <button id="btn-diag-capas" onclick="switchDiagram('capas')" class="w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-gray-200 text-gray-700 hover:bg-gray-50">
+                    2. Capas (arquitectura_capas.jpg)
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. Style Theme -->
+        <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Paleta Visual (Estilo)</label>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="setTheme('academic')" id="theme-academic" class="py-2 px-3 rounded text-xs font-medium border-2 border-indigo-600 bg-white text-indigo-900 shadow-sm flex items-center justify-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-white border border-gray-300"></span>
+                    Modo Académico (Luz)
+                </button>
+                <button onclick="setTheme('presentation')" id="theme-presentation" class="py-2 px-3 rounded text-xs font-medium border border-gray-200 bg-gray-900 text-gray-200 hover:bg-gray-800 flex items-center justify-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-gray-900 border border-gray-700"></span>
+                    Modo Diapositiva (Oscuro)
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. Dynamic Text Editors -->
+        <div class="flex-1 flex flex-col min-h-[300px]">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Editar Contenido del Diagrama</label>
+            
+            <!-- Editor for Diagram 1 (Hibrida) -->
+            <div id="editor-hibrida" class="space-y-4 flex-1">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                    <span class="text-xs font-bold text-gray-700 block border-b pb-1">Sedes On-Premise</span>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Sede Lima (Principal)</label>
+                        <input type="text" id="edit-lima-title" oninput="updateSvgText('text-lima-title', this.value)" value="Sede Lima (Principal)" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium font-mono">Conectividad Principal</label>
+                        <input type="text" id="edit-lima-fibra" oninput="updateSvgText('text-lima-fibra', this.value)" value="Fibra: 400 Mbps" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Sede Chiclayo</label>
+                        <input type="text" id="edit-chi-fibra" oninput="updateSvgText('text-chi-fibra', this.value)" value="Fibra: 400 Mbps" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                    <span class="text-xs font-bold text-gray-700 block border-b pb-1">Huawei Cloud & Base de Datos</span>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Ubicación del Nodo</label>
+                        <input type="text" id="edit-cloud-region" oninput="updateSvgText('text-cloud-region', this.value)" value="Huawei Cloud - Región Perú" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Servidor Core Bancario</label>
+                        <input type="text" id="edit-core-db" oninput="updateSvgText('text-core-db', this.value)" value="PostgreSQL (Principal)" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Usuarios Concurrentes (Pico)</label>
+                        <input type="text" id="edit-concurrent" oninput="updateSvgText('text-concurrent', this.value)" value="1,700 usuarios/pico" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor for Diagram 2 (Capas) -->
+            <div id="editor-capas" class="space-y-4 flex-1 hidden">
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                    <span class="text-xs font-bold text-gray-700 block border-b pb-1">Capa de Aplicación & Tecnología</span>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium font-mono">Framework & Configuración</label>
+                        <input type="text" id="edit-capas-tech" oninput="updateSvgText('text-capas-tech', this.value)" value="FastAPI (Python 3.11) + Async I/O | Pydantic Schema Validation | Rate Limiting" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                    <span class="text-xs font-bold text-gray-700 block border-b pb-1">Capa de Datos</span>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Core Bancario Motor</label>
+                        <input type="text" id="edit-capas-core" oninput="updateSvgText('text-capas-core', this.value)" value="PostgreSQL 16 - Transacciones 100%" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 font-medium">Entidades Clave</label>
+                        <input type="text" id="edit-capas-entities" oninput="updateSvgText('text-capas-entities', this.value)" value="Entidades clave: Socio (50K) | Cuenta | Transacción | Préstamo | Cuota" class="w-full mt-1 px-2 py-1 text-xs border rounded bg-white">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Export Actions -->
+        <div class="border-t border-gray-200 pt-4 space-y-2">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Exportar Gráfico</label>
+            <button onclick="exportSVG()" class="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm shadow transition-all flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Descargar como SVG (Vectorial)
+            </button>
+            <button onclick="exportPNG()" class="w-full py-2 px-4 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-medium text-xs transition-all flex items-center justify-center gap-2">
+                Descargar como PNG (Alta Calidad)
+            </button>
+            <p class="text-[10px] text-gray-400 text-center mt-1">💡 Se recomienda usar formato **SVG** para insertar en Word o LaTeX sin pérdida de nitidez.</p>
+        </div>
+    </aside>
+
+    <!-- Right Panel: Live SVG Rendering Viewport -->
+    <main class="lg:col-span-3 p-6 flex flex-col justify-between items-center bg-gray-50 overflow-auto">
+        
+        <!-- Dynamic Subtitle with context -->
+        <div class="w-full text-center mb-4">
+            <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest block">Vista Previa</span>
+            <h2 id="active-diagram-title" class="text-lg font-bold text-gray-800">Arquitectura de red híbrida - Cooperativa financiera</h2>
+        </div>
+
+        <!-- SVG Container Box -->
+        <div class="w-full max-w-4xl bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center min-h-[500px]" id="canvas-wrapper">
+            
+            <!-- DIAGRAM 1: ARQUITECTURA DE RED HÍBRIDA (arquitectura_general_hibrida.jpg) -->
+            <div id="svg-hibrida-wrapper" class="svg-container w-full">
+                <svg id="svg-hibrida" viewBox="0 0 1000 1100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Definitions for markers and filters -->
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#4B5563"/>
+                        </marker>
+                        <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563EB"/>
+                        </marker>
+                        <marker id="arrow-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Canvas Background -->
+                    <rect width="1000" height="1100" rx="16" id="bg-canvas-1" fill="#FFFFFF"/>
+
+                    <!-- DIAGRAM TITLE -->
+                    <text x="500" y="50" text-anchor="middle" font-size="22" font-weight="bold" id="title-main-1" fill="#1F2937">Arquitectura de red híbrida - Cooperativa financiera</text>
+
+                    <!-- LEFT SIDE: ON-PREMISE BRANCHES -->
+                    <!-- Sede Lima -->
+                    <g transform="translate(40, 110)">
+                        <rect width="250" height="260" rx="12" id="box-lima" fill="#EFF6FF" stroke="#BFDBFE" stroke-width="2"/>
+                        <text x="125" y="35" text-anchor="middle" font-size="16" font-weight="bold" id="text-lima-title" fill="#1E40AF">Sede Lima (Principal)</text>
+                        
+                        <!-- Internal Components -->
+                        <rect x="20" y="60" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5"/>
+                        <text x="125" y="80" text-anchor="middle" font-size="12" font-weight="medium" fill="#1E3A8A">R-LIMA (Router Cisco)</text>
+
+                        <rect x="20" y="100" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5"/>
+                        <text x="125" y="120" text-anchor="middle" font-size="12" font-weight="medium" fill="#1E3A8A">Switch Aruba 1930</text>
+
+                        <rect x="20" y="140" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5"/>
+                        <text x="125" y="160" text-anchor="middle" font-size="12" font-weight="medium" fill="#1E3A8A">Firewall FortiGate 60F</text>
+
+                        <rect x="20" y="180" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#DBEAFE" stroke-width="1.5"/>
+                        <text x="125" y="200" text-anchor="middle" font-size="12" font-weight="medium" fill="#1E3A8A">UPS Vertiv 2KVA</text>
+
+                        <rect x="20" y="220" width="210" height="26" rx="6" fill="#DBEAFE" stroke="#93C5FD"/>
+                        <text x="125" y="237" text-anchor="middle" font-size="11" font-weight="bold" id="text-lima-fibra" fill="#1E40AF">Fibra: 400 Mbps</text>
+                    </g>
+
+                    <!-- Local DB Replica Box -->
+                    <g transform="translate(40, 395)">
+                        <rect width="250" height="95" rx="12" id="box-replica" fill="#F3E8FF" stroke="#D8B4FE" stroke-width="2"/>
+                        <text x="125" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#6B21A8">PowerEdge T360</text>
+                        <text x="125" y="60" text-anchor="middle" font-size="12" fill="#7E22CE">PostgreSQL 16 (Réplica local)</text>
+                        <text x="125" y="78" text-anchor="middle" font-size="10" fill="#8B5CF6" font-style="italic">Sincronización Periódica</text>
+                    </g>
+
+                    <!-- Sede Chiclayo -->
+                    <g transform="translate(40, 515)">
+                        <rect width="250" height="170" rx="12" id="box-chiclayo" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="2"/>
+                        <text x="125" y="35" text-anchor="middle" font-size="16" font-weight="bold" fill="#065F46">Sede Chiclayo</text>
+                        
+                        <!-- Internal Components -->
+                        <rect x="20" y="55" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#D1FAE5" stroke-width="1.5"/>
+                        <text x="125" y="75" text-anchor="middle" font-size="12" font-weight="medium" fill="#047857">R-CHI (Router)</text>
+
+                        <rect x="20" y="95" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#D1FAE5" stroke-width="1.5"/>
+                        <text x="125" y="115" text-anchor="middle" font-size="12" font-weight="medium" fill="#047857">Switch + Firewall Local</text>
+
+                        <rect x="20" y="133" width="210" height="26" rx="6" fill="#D1FAE5" stroke="#6EE7B7"/>
+                        <text x="125" y="150" text-anchor="middle" font-size="11" font-weight="bold" id="text-chi-fibra" fill="#065F46">Fibra: 400 Mbps</text>
+                    </g>
+
+                    <!-- Sede Arequipa -->
+                    <g transform="translate(40, 710)">
+                        <rect width="250" height="130" rx="12" id="box-arequipa" fill="#FFF5F5" stroke="#FECACA" stroke-width="2"/>
+                        <text x="125" y="35" text-anchor="middle" font-size="16" font-weight="bold" fill="#991B1B">Sede Arequipa</text>
+                        
+                        <!-- Internal Components -->
+                        <rect x="20" y="55" width="210" height="30" rx="6" fill="#FFFFFF" stroke="#FEE2E2" stroke-width="1.5"/>
+                        <text x="125" y="75" text-anchor="middle" font-size="12" font-weight="medium" fill="#B91C1C">R-AQP, Switch, FW</text>
+
+                        <rect x="20" y="93" width="210" height="26" rx="6" fill="#FEE2E2" stroke="#FCA5A5"/>
+                        <text x="125" y="110" text-anchor="middle" font-size="11" font-weight="bold" fill="#991B1B">Fibra dedicada: Simétrico</text>
+                    </g>
+
+
+                    <!-- RIGHT SIDE: CLOUD CLUSTER -->
+                    <!-- Cloud Boundary Frame -->
+                    <g transform="translate(370, 110)">
+                        <rect width="590" height="880" rx="16" id="box-cloud-main" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="3"/>
+                        
+                        <!-- Cloud Title Header -->
+                        <text x="295" y="35" text-anchor="middle" font-size="18" font-weight="bold" id="text-cloud-region" fill="#166534">Huawei Cloud - Región Perú</text>
+                        <text x="295" y="55" text-anchor="middle" font-size="12" id="text-cloud-lat" fill="#15803D" font-weight="medium">Nodo local: Latencia &lt; 30ms</text>
+
+                        <!-- VPN Gateway Block -->
+                        <g transform="translate(30, 80)">
+                            <rect width="530" height="80" rx="10" id="box-vpn" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="2"/>
+                            <text x="265" y="35" text-anchor="middle" font-size="15" font-weight="bold" fill="#991B1B">VPN Gateway + SD-WAN</text>
+                            <text x="265" y="58" text-anchor="middle" font-size="11" fill="#C53030">IPsec con AES-256 / Microsegmentación</text>
+                        </g>
+
+                        <!-- VPC dashed frame -->
+                        <g transform="translate(30, 180)">
+                            <rect width="530" height="665" rx="12" fill="none" stroke="#86EFAC" stroke-width="2" stroke-dasharray="6,4"/>
+                            <text x="20" y="25" font-size="11" font-weight="bold" fill="#166534" letter-spacing="0.5">VPC PRIVADA / ZERO TRUST</text>
+
+                            <!-- Core Bancario DB Card -->
+                            <g transform="translate(20, 50)">
+                                <rect width="230" height="120" rx="8" id="box-coreb" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1.5"/>
+                                <text x="115" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#1E40AF">SRV-CoreBancario</text>
+                                <text x="115" y="55" text-anchor="middle" font-size="11" fill="#1D4ED8">ECS C9 (4 vCPU)</text>
+                                <text x="115" y="78" text-anchor="middle" font-size="12" font-weight="bold" id="text-core-db" fill="#1E3A8A">PostgreSQL (Principal)</text>
+                                <text x="115" y="100" text-anchor="middle" font-size="10" id="text-concurrent" fill="#2563EB">1,700 usuarios/pico</text>
+                            </g>
+
+                            <!-- Data Replica Card -->
+                            <g transform="translate(280, 50)">
+                                <rect width="230" height="120" rx="8" id="box-datarep" fill="#F5F3FF" stroke="#C084FC" stroke-width="1.5"/>
+                                <text x="115" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#5B21B6">SRV-Data-Replica</text>
+                                <text x="115" y="55" text-anchor="middle" font-size="11" fill="#6D28D9">ECS C9 (2 vCPU)</text>
+                                <text x="115" y="80" text-anchor="middle" font-size="12" font-weight="bold" fill="#4C1D95">PostgreSQL (Lectura)</text>
+                                <text x="115" y="100" text-anchor="middle" font-size="10" fill="#7C3AED" font-style="italic">Réplica Sincronizada</text>
+                            </g>
+
+                            <!-- Sync line between databases -->
+                            <path d="M 250,110 L 280,110" stroke="#2563EB" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrow-blue)"/>
+                            <text x="265" y="102" text-anchor="middle" font-size="10" font-weight="bold" fill="#2563EB">Sync</text>
+
+                            <!-- Async Down Arrow -->
+                            <path d="M 135,170 L 135,210" stroke="#9333EA" stroke-width="2" stroke-dasharray="3,3" marker-end="url(#arrow)"/>
+                            <text x="145" y="195" font-size="10" font-weight="bold" fill="#9333EA">Async</text>
+
+                            <!-- Contingency DB Card -->
+                            <g transform="translate(20, 210)">
+                                <rect width="230" height="110" rx="8" id="box-conting" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.5"/>
+                                <text x="115" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#9A3412">SRV-Contingencia</text>
+                                <text x="115" y="55" text-anchor="middle" font-size="11" fill="#C2410C">MongoDB (NoSQL)</text>
+                                <text x="115" y="75" text-anchor="middle" font-size="11" fill="#EA580C">Respaldo Operativo</text>
+                                <text x="115" y="95" text-anchor="middle" font-size="10" font-weight="bold" fill="#C2410C">Failover: &lt; 50ms</text>
+                            </g>
+
+                            <!-- Monitoring Card -->
+                            <g transform="translate(280, 210)">
+                                <rect width="230" height="110" rx="8" id="box-mon" fill="#FEF3C7" stroke="#FCD34D" stroke-width="1.5"/>
+                                <text x="115" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#92400E">SRV-Monitoreo</text>
+                                <text x="115" y="55" text-anchor="middle" font-size="11" fill="#B45309">Prometheus + Grafana</text>
+                                <text x="115" y="75" text-anchor="middle" font-size="11" fill="#D97706">Métricas de Latencia</text>
+                                <text x="115" y="95" text-anchor="middle" font-size="10" font-weight="bold" fill="#B45309">SLA &lt; 50ms</text>
+                            </g>
+
+                            <!-- Distributed Storage -->
+                            <g transform="translate(20, 345)">
+                                <rect width="490" height="85" rx="8" id="box-storage" fill="#F0F9FF" stroke="#7DD3FC" stroke-width="1.5"/>
+                                <text x="245" y="32" text-anchor="middle" font-size="14" font-weight="bold" fill="#075985">Almacenamiento Distribuido</text>
+                                <text x="245" y="55" text-anchor="middle" font-size="12" fill="#0369A1">Cloud Backup (CBR) 200GB + Replicación Local</text>
+                                <text x="245" y="73" text-anchor="middle" font-size="10" font-style="italic" fill="#0284C7">Arreglo RAID 10 Remoto</text>
+                            </g>
+
+                            <!-- Application Layer (FastAPI) -->
+                            <g transform="translate(20, 450)">
+                                <rect width="490" height="85" rx="8" id="box-fastapi" fill="#ECFDF5" stroke="#6EE7B7" stroke-width="1.5"/>
+                                <text x="245" y="32" text-anchor="middle" font-size="15" font-weight="bold" fill="#065F46">Microservicios FastAPI + Balanceador de Carga Elástico</text>
+                                <text x="245" y="55" text-anchor="middle" font-size="12" fill="#047857">Kubernetes Cluster (Auto-scaling) / Docker Engine</text>
+                                <text x="245" y="73" text-anchor="middle" font-size="10" fill="#059669">Gestión de Rutas y Seguridad Endpoints</text>
+                            </g>
+
+                            <!-- Presentation Channels -->
+                            <g transform="translate(20, 555)">
+                                <rect width="490" height="85" rx="8" id="box-channels" fill="#F5F5F4" stroke="#D6D3D1" stroke-width="1.5"/>
+                                <text x="245" y="32" text-anchor="middle" font-size="15" font-weight="bold" fill="#44403C">Canales de Presentación</text>
+                                <text x="245" y="55" text-anchor="middle" font-size="11" fill="#57534E">Banca Móvil (React Native)  |  Web App (React + TS)  |  Ventanilla (Angular)</text>
+                                <text x="245" y="73" text-anchor="middle" font-size="10" fill="#78716C">Integrado mediante protocolo HTTPS y JSON Seguro</text>
+                            </g>
+
+                        </g>
+                    </g>
+
+                    <!-- WAN CONNECTIONS - LINES WITH LABELS -->
+                    <!-- Sede Lima -> VPN Gateway -->
+                    <path d="M 290,240 L 400,240" stroke="#4B5563" stroke-width="2.5" marker-end="url(#arrow)"/>
+                    <rect x="305" y="215" width="80" height="20" rx="4" fill="#E5E7EB"/>
+                    <text x="345" y="229" text-anchor="middle" font-size="10" font-weight="bold" fill="#374151">WAN / IPsec</text>
+
+                    <!-- Sede Chiclayo -> Cloud Core -->
+                    <path d="M 290,600 C 330,600 320,490 395,430" fill="none" stroke="#059669" stroke-width="2.5" stroke-dasharray="4,2" marker-end="url(#arrow-green)"/>
+                    <rect x="310" y="520" width="60" height="20" rx="4" fill="#D1FAE5"/>
+                    <text x="340" y="534" text-anchor="middle" font-size="10" font-weight="bold" fill="#065F46">SD-WAN</text>
+
+                    <!-- Sede Arequipa -> Cloud Core -->
+                    <path d="M 290,775 C 340,775 330,730 395,660" fill="none" stroke="#DC2626" stroke-width="2" marker-end="url(#arrow)"/>
+                    <rect x="315" y="710" width="55" height="20" rx="4" fill="#FEE2E2"/>
+                    <text x="342" y="724" text-anchor="middle" font-size="10" font-weight="bold" fill="#991B1B">Fibra ISP</text>
+
+                    <!-- BOTTOM METADATA BAR -->
+                    <rect x="40" y="1010" width="920" height="45" rx="8" id="box-footer-1" fill="#F3F4F6" stroke="#E5E7EB" stroke-width="1.5"/>
+                    <text x="500" y="1037" text-anchor="middle" font-size="12" font-weight="bold" id="footer-text-1" fill="#374151">Disponibilidad del Sistema: 99.90%  |  Latencia Objetivo: &lt; 50ms  |  Soporte Máximo: 1,700 Usuarios concurrentes pico</text>
+                </svg>
+            </div>
+
+            <!-- DIAGRAM 2: ARQUITECTURA EN CAPAS (arquitectura_capas.jpg) -->
+            <div id="svg-capas-wrapper" class="svg-container w-full hidden">
+                <svg id="svg-capas" viewBox="0 0 1000 1150" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Definitions -->
+                    <defs>
+                        <marker id="arrow-down" viewBox="0 0 10 10" refX="5" refY="6" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 0 L 5 10 L 10 0 z" fill="#4B5563"/>
+                        </marker>
+                        <marker id="arrow-down-blue" viewBox="0 0 10 10" refX="5" refY="6" markerWidth="6" markerHeight="6" orient="auto">
+                            <path d="M 0 0 L 5 10 L 10 0 z" fill="#2563EB"/>
+                        </marker>
+                    </defs>
+
+                    <!-- Background -->
+                    <rect width="1000" height="1150" rx="16" id="bg-canvas-2" fill="#FFFFFF"/>
+
+                    <!-- Title -->
+                    <text x="500" y="50" text-anchor="middle" font-size="22" font-weight="bold" id="title-main-2" fill="#1F2937">Arquitectura en capas - Core Bancario</text>
+
+                    <!-- CAPA 1: PRESENTACION -->
+                    <g transform="translate(40, 90)">
+                        <rect width="920" height="190" rx="12" id="box-capa1" fill="#ECFDF5" stroke="#10B981" stroke-width="2"/>
+                        <text x="30" y="35" font-size="16" font-weight="bold" fill="#065F46">1. Capa de presentación</text>
+                        <text x="30" y="55" font-size="12" fill="#047857" font-weight="medium">Interfaces de usuario - Canales de acceso e ingreso al Core</text>
+
+                        <!-- Sub cards -->
+                        <g transform="translate(30, 75)">
+                            <rect width="190" height="90" rx="8" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#065F46">Banca Móvil</text>
+                            <text x="95" y="60" text-anchor="middle" font-size="12" fill="#059669">React Native</text>
+                        </g>
+                        <g transform="translate(250, 75)">
+                            <rect width="190" height="90" rx="8" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#065F46">Banca Web</text>
+                            <text x="95" y="60" text-anchor="middle" font-size="12" fill="#059669">React + TS</text>
+                        </g>
+                        <g transform="translate(470, 75)">
+                            <rect width="190" height="90" rx="8" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#065F46">Ventanilla</text>
+                            <text x="95" y="60" text-anchor="middle" font-size="12" fill="#059669">Angular + TS</text>
+                        </g>
+                        <g transform="translate(690, 75)">
+                            <rect width="190" height="90" rx="8" fill="#FFFFFF" stroke="#A7F3D0" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="14" font-weight="bold" fill="#065F46">Dashboard</text>
+                            <text x="95" y="60" text-anchor="middle" font-size="12" fill="#059669">Monitoreo SBS</text>
+                        </g>
+                    </g>
+
+                    <!-- Arrows Capa 1 -> Capa 2 -->
+                    <path d="M 215,280 L 215,310" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 435,280 L 435,310" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 655,280 L 655,310" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 875,280 L 875,310" stroke="#10B981" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+
+
+                    <!-- CAPA 2: APLICACIÓN -->
+                    <g transform="translate(40, 320)">
+                        <rect width="920" height="235" rx="12" id="box-capa2" fill="#F5F3FF" stroke="#8B5CF6" stroke-width="2"/>
+                        <text x="30" y="35" font-size="16" font-weight="bold" fill="#5B21B6">2. Capa de aplicación</text>
+                        <text x="30" y="55" font-size="12" fill="#6D28D9" font-weight="medium">Microservicios - Orquestación lógica de negocio de la cooperativa</text>
+
+                        <!-- Sub cards -->
+                        <g transform="translate(30, 75)">
+                            <rect width="190" height="85" rx="8" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="13" font-weight="bold" fill="#5B21B6">API Gateway</text>
+                            <text x="95" y="58" text-anchor="middle" font-size="11" fill="#7C3AED">Enrutamiento JWT</text>
+                        </g>
+                        <g transform="translate(250, 75)">
+                            <rect width="190" height="85" rx="8" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="13" font-weight="bold" fill="#5B21B6">Gestión Cuentas</text>
+                            <text x="95" y="58" text-anchor="middle" font-size="11" fill="#7C3AED">Transacciones</text>
+                        </g>
+                        <g transform="translate(470, 75)">
+                            <rect width="190" height="85" rx="8" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="13" font-weight="bold" fill="#5B21B6">Evaluación Créditos</text>
+                            <text x="95" y="58" text-anchor="middle" font-size="11" fill="#7C3AED">Scoring IA</text>
+                        </g>
+                        <g transform="translate(690, 75)">
+                            <rect width="190" height="85" rx="8" fill="#FFFFFF" stroke="#DDD6FE" stroke-width="1.5"/>
+                            <text x="95" y="35" text-anchor="middle" font-size="13" font-weight="bold" fill="#5B21B6">Auditoría</text>
+                            <text x="95" y="58" text-anchor="middle" font-size="11" fill="#7C3AED">Logs SBS</text>
+                        </g>
+
+                        <!-- Technological Badge banner -->
+                        <rect x="30" y="175" width="860" height="40" rx="6" fill="#EDE9FE"/>
+                        <text x="460" y="200" text-anchor="middle" font-size="11" font-weight="bold" id="text-capas-tech" fill="#5B21B6" letter-spacing="0.5">FastAPI (Python 3.11) + Async I/O | Pydantic Schema Validation | Rate Limiting | Zero Trust Auth</text>
+                    </g>
+
+                    <!-- Arrows Capa 2 -> Capa 3 -->
+                    <path d="M 215,555 L 215,585" stroke="#8B5CF6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 435,555 L 435,585" stroke="#8B5CF6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 655,555 L 655,585" stroke="#8B5CF6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 875,555 L 875,585" stroke="#8B5CF6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+
+
+                    <!-- CAPA 3: DATOS -->
+                    <g transform="translate(40, 595)">
+                        <rect width="920" height="240" rx="12" id="box-capa3" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+                        <text x="30" y="35" font-size="16" font-weight="bold" fill="#1E40AF">3. Capa de datos</text>
+                        <text x="30" y="55" font-size="12" fill="#1D4ED8" font-weight="medium">Bases de datos - Capacidad de almacenamiento transaccional y réplicas seguras</text>
+
+                        <!-- Data Store Subcards -->
+                        <g transform="translate(30, 75)">
+                            <rect width="190" height="110" rx="8" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="1.5"/>
+                            <text x="95" y="25" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E40AF">SRV-CoreBancario</text>
+                            <text x="95" y="48" text-anchor="middle" font-size="11" id="text-capas-core" fill="#1E3A8A" font-weight="medium">PostgreSQL 16</text>
+                            <text x="95" y="68" text-anchor="middle" font-size="10" fill="#2563EB">Escritura Principal</text>
+                            <text x="95" y="85" text-anchor="middle" font-size="10" fill="#3B82F6" font-style="italic">RAID 10 + WAL log</text>
+                        </g>
+                        <g transform="translate(250, 75)">
+                            <rect width="190" height="110" rx="8" fill="#FFFFFF" stroke="#BFDBFE" stroke-width="1.5"/>
+                            <text x="95" y="25" text-anchor="middle" font-size="12" font-weight="bold" fill="#1E40AF">SRV-Data-Replica</text>
+                            <text x="95" y="48" text-anchor="middle" font-size="11" fill="#1E3A8A">PostgreSQL 16 (RO)</text>
+                            <text x="95" y="68" text-anchor="middle" font-size="10" fill="#2563EB">Consultas de saldo</text>
+                            <text x="95" y="85" text-anchor="middle" font-size="10" fill="#3B82F6" font-style="italic">Sincronizado &lt;1ms</text>
+                        </g>
+                        <g transform="translate(470, 75)">
+                            <rect width="190" height="110" rx="8" fill="#FFFFFF" stroke="#FED7AA" stroke-width="1.5"/>
+                            <text x="95" y="25" text-anchor="middle" font-size="12" font-weight="bold" fill="#9A3412">SRV-Contingencia</text>
+                            <text x="95" y="48" text-anchor="middle" font-size="11" fill="#C2410C">MongoDB (NoSQL)</text>
+                            <text x="95" y="68" text-anchor="middle" font-size="10" fill="#EA580C">Respaldo operativo</text>
+                            <text x="95" y="85" text-anchor="middle" font-size="10" fill="#F97316" font-style="italic">Failover automático</text>
+                        </g>
+                        <g transform="translate(690, 75)">
+                            <rect width="190" height="110" rx="8" fill="#FFFFFF" stroke="#FDE68A" stroke-width="1.5"/>
+                            <text x="95" y="25" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400E">SRV-Monitoreo</text>
+                            <text x="95" y="48" text-anchor="middle" font-size="11" fill="#B45309">Prometheus</text>
+                            <text x="95" y="68" text-anchor="middle" font-size="10" fill="#D97706">Métricas latencia</text>
+                            <text x="95" y="85" text-anchor="middle" font-size="10" fill="#F59E0B" font-style="italic">Dashboard alertas</text>
+                        </g>
+
+                        <!-- Key Entities Metadata Label -->
+                        <text x="460" y="215" text-anchor="middle" font-size="11" font-weight="bold" id="text-capas-entities" fill="#1E40AF">Entidades clave: Socio (50K) | Cuenta | Transacción | Préstamo | Cuota | Usuario | LogAuditoria</text>
+                    </g>
+
+                    <!-- Arrows Capa 3 -> Capa 4 -->
+                    <path d="M 215,835 L 215,865" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 435,835 L 435,865" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 655,835 L 655,865" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+                    <path d="M 875,835 L 875,865" stroke="#3B82F6" stroke-width="2.5" marker-end="url(#arrow-down)"/>
+
+
+                    <!-- CAPA 4: INFRAESTRUCTURA -->
+                    <g transform="translate(40, 875)">
+                        <rect width="920" height="190" rx="12" id="box-capa4" fill="#FAFAF9" stroke="#78716C" stroke-width="2"/>
+                        <text x="30" y="35" font-size="16" font-weight="bold" fill="#44403C">4. Capa de infraestructura</text>
+                        <text x="30" y="55" font-size="12" fill="#57534E" font-weight="medium">Servidores físicos, de red, seguridad perimetral y conectividad a nivel de hardware</text>
+
+                        <!-- Sub Cards (3) -->
+                        <g transform="translate(30, 75)">
+                            <rect width="260" height="95" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5"/>
+                            <text x="130" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#44403C">Conectividad WAN</text>
+                            <text x="130" y="48" text-anchor="middle" font-size="11" fill="#78716C">Fibra dedicada simétrica</text>
+                            <text x="130" y="68" text-anchor="middle" font-size="11" fill="#57534E" font-weight="bold">400 Mbps simétrico | SLA 99.7%</text>
+                        </g>
+                        <g transform="translate(330, 75)">
+                            <rect width="260" height="95" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5"/>
+                            <text x="130" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#44403C">Seguridad de Borde</text>
+                            <text x="130" y="48" text-anchor="middle" font-size="11" fill="#78716C">Firewall FortiGate 60F</text>
+                            <text x="130" y="68" text-anchor="middle" font-size="11" fill="#57534E" font-weight="bold">ACL L3/L7 + SD-WAN VPN</text>
+                        </g>
+                        <g transform="translate(630, 75)">
+                            <rect width="260" height="95" rx="8" fill="#FFFFFF" stroke="#E7E5E4" stroke-width="1.5"/>
+                            <text x="130" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#44403C">Cómputo y Almacenamiento</text>
+                            <text x="130" y="48" text-anchor="middle" font-size="11" fill="#78716C">Servidores Huawei ECS C9</text>
+                            <text x="130" y="68" text-anchor="middle" font-size="11" fill="#57534E" font-weight="bold">Dell T360 On-Premise (7.68 TB RAID 10)</text>
+                        </g>
+                    </g>
+
+                    <!-- BOTTOM METADATA BAR FOR CAPAS -->
+                    <rect x="40" y="1085" width="920" height="45" rx="8" id="box-footer-2" fill="#F3F4F6" stroke="#E5E7EB" stroke-width="1.5"/>
+                    <text x="500" y="1112" text-anchor="middle" font-size="11" font-weight="bold" id="footer-text-2" fill="#374151">Disponibilidad de Servicio: 99.90%  |  Failover Automático: &lt; 50ms  |  Políticas Zero Trust  |  Auditoría en Tiempo Real</text>
+                </svg>
+            </div>
+
+        </div>
+
+        <!-- Hint footer -->
+        <div class="mt-4 text-xs text-gray-500 text-center">
+            Visualizando elementos en alta definición vectorial. Usa el panel izquierdo para editar etiquetas de texto y descargarlo directamente.
+        </div>
+
+    </main>
+</div>
+
+<!-- Core Scripts -->
+<script>
+    let currentDiagram = 'hibrida';
+    let currentTheme = 'academic';
+
+    // Update Text inside SVG
+    function updateSvgText(elementId, newText) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.textContent = newText;
+        }
+    }
+
+    // Switch active diagram
+    function switchDiagram(diagram) {
+        currentDiagram = diagram;
+        
+        // Buttons visual update
+        const btnHibrida = document.getElementById('btn-diag-hibrida');
+        const btnCapas = document.getElementById('btn-diag-capas');
+        const editorHibrida = document.getElementById('editor-hibrida');
+        const editorCapas = document.getElementById('editor-capas');
+        const svgHibrida = document.getElementById('svg-hibrida-wrapper');
+        const svgCapas = document.getElementById('svg-capas-wrapper');
+        const mainTitle = document.getElementById('active-diagram-title');
+
+        if (diagram === 'hibrida') {
+            btnHibrida.className = "w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-indigo-600 bg-indigo-50 text-indigo-900 shadow-sm";
+            btnCapas.className = "w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-gray-200 text-gray-700 hover:bg-gray-50";
+            
+            editorHibrida.classList.remove('hidden');
+            editorCapas.classList.add('hidden');
+            
+            svgHibrida.classList.remove('hidden');
+            svgCapas.classList.add('hidden');
+            
+            mainTitle.innerText = "1. Arquitectura de red híbrida - Cooperativa financiera";
+        } else {
+            btnCapas.className = "w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-indigo-600 bg-indigo-50 text-indigo-900 shadow-sm";
+            btnHibrida.className = "w-full text-left py-2.5 px-4 rounded-lg font-medium text-sm transition-all border border-gray-200 text-gray-700 hover:bg-gray-50";
+            
+            editorHibrida.classList.add('hidden');
+            editorCapas.classList.remove('hidden');
+            
+            svgHibrida.classList.add('hidden');
+            svgCapas.classList.remove('hidden');
+            
+            mainTitle.innerText = "2. Arquitectura en capas - Core Bancario";
+        }
+        // re-apply active theme to newly rendered SVG
+        setTheme(currentTheme);
+    }
+
+    // Handle Style Themes (Academic Light vs Presentation Dark)
+    function setTheme(theme) {
+        currentTheme = theme;
+        const btnAcademic = document.getElementById('theme-academic');
+        const btnPresentation = document.getElementById('theme-presentation');
+
+        const bg1 = document.getElementById('bg-canvas-1');
+        const bg2 = document.getElementById('bg-canvas-2');
+        const title1 = document.getElementById('title-main-1');
+        const title2 = document.getElementById('title-main-2');
+        const footerBox1 = document.getElementById('box-footer-1');
+        const footerBox2 = document.getElementById('box-footer-2');
+        const footerText1 = document.getElementById('footer-text-1');
+        const footerText2 = document.getElementById('footer-text-2');
+
+        // Elements to adjust for dark theme contrast
+        const boxCapa4 = document.getElementById('box-capa4');
+
+        if (theme === 'academic') {
+            // Style buttons
+            btnAcademic.className = "py-2 px-3 rounded text-xs font-medium border-2 border-indigo-600 bg-white text-indigo-900 shadow-sm flex items-center justify-center gap-1";
+            btnPresentation.className = "py-2 px-3 rounded text-xs font-medium border border-gray-200 bg-gray-900 text-gray-200 hover:bg-gray-800 flex items-center justify-center gap-1";
+            
+            // SVG 1 Academic Styling
+            bg1.setAttribute('fill', '#FFFFFF');
+            title1.setAttribute('fill', '#1F2937');
+            footerBox1.setAttribute('fill', '#F3F4F6');
+            footerBox1.setAttribute('stroke', '#E5E7EB');
+            footerText1.setAttribute('fill', '#374151');
+
+            // SVG 2 Academic Styling
+            bg2.setAttribute('fill', '#FFFFFF');
+            title2.setAttribute('fill', '#1F2937');
+            footerBox2.setAttribute('fill', '#F3F4F6');
+            footerBox2.setAttribute('stroke', '#E5E7EB');
+            footerText2.setAttribute('fill', '#374151');
+            if (boxCapa4) boxCapa4.setAttribute('fill', '#FAFAF9');
+
+        } else {
+            // Presentation Dark Mode
+            btnAcademic.className = "py-2 px-3 rounded text-xs font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1";
+            btnPresentation.className = "py-2 px-3 rounded text-xs font-medium border-2 border-indigo-400 bg-gray-900 text-gray-100 shadow-sm flex items-center justify-center gap-1";
+            
+            // SVG 1 Dark Styling
+            bg1.setAttribute('fill', '#0F172A');
+            title1.setAttribute('fill', '#F8FAFC');
+            footerBox1.setAttribute('fill', '#1E293B');
+            footerBox1.setAttribute('stroke', '#334155');
+            footerText1.setAttribute('fill', '#94A3B8');
+
+            // SVG 2 Dark Styling
+            bg2.setAttribute('fill', '#0F172A');
+            title2.setAttribute('fill', '#F8FAFC');
+            footerBox2.setAttribute('fill', '#1E293B');
+            footerBox2.setAttribute('stroke', '#334155');
+            footerText2.setAttribute('fill', '#94A3B8');
+            if (boxCapa4) boxCapa4.setAttribute('fill', '#1C1917');
+        }
+    }
+
+    // Export active SVG file
+    function exportSVG() {
+        const svgId = currentDiagram === 'hibrida' ? 'svg-hibrida' : 'svg-capas';
+        const svgElement = document.getElementById(svgId);
+        
+        // Serialize
+        const serializer = new XMLSerializer();
+        let source = serializer.serializeToString(svgElement);
+        
+        // Add namespaces if missing
+        if(!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)){
+            source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+        }
+        if(!source.match(/^<svg[^>]+xmlns\:xlink="http\:\/\/www\.w3\.org\/1999\/xlink"/)){
+            source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+        }
+
+        // Create download trigger
+        const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+        const downloadLink = document.createElement("a");
+        downloadLink.href = url;
+        downloadLink.download = `${svgId}_mejorado.svg`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+    }
+
+    // Export active SVG as high-quality PNG
+    function exportPNG() {
+        const svgId = currentDiagram === 'hibrida' ? 'svg-hibrida' : 'svg-capas';
+        const svgElement = document.getElementById(svgId);
+        
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svgElement);
+        const svgBlob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+        const URL = window.URL || window.webkitURL || window;
+        const blobURL = URL.createObjectURL(svgBlob);
+        
+        const image = new Image();
+        image.onload = function() {
+            // Scaled to 2x for professional high-res quality
+            const scale = 2;
+            const canvas = document.createElement('canvas');
+            canvas.width = svgElement.viewBox.baseVal.width * scale;
+            canvas.height = svgElement.viewBox.baseVal.height * scale;
+            
+            const context = canvas.getContext('2d');
+            context.scale(scale, scale);
+            context.drawImage(image, 0, 0);
+            
+            const pngURL = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement("a");
+            downloadLink.href = pngURL;
+            downloadLink.download = `${svgId}_mejorado.png`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        };
+        image.src = blobURL;
+    }
+</script>

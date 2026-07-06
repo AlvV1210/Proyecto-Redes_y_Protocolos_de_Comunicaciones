@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas de Arquitectura - Cooperativa Híbrida</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+        }
+        .grid-bg {
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="text-slate-100 antialiased grid-bg min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800 bg-slate-900/85 backdrop-blur sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                        Informe Académico v3.0
+                    </span>
+                    <span class="text-xs text-slate-500">Esquema Técnico y de Red</span>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-white mt-1">Estructuración Tecnológica y Red Híbrida</h1>
+                <p class="text-xs text-slate-400">Diagramas Técnicos de Red, Flujos de Comunicación y Capas de Software</p>
+            </div>
+            
+            <!-- Controls -->
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="switchTab('red')" id="tab-btn-red" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/10 border border-indigo-500/30">
+                    <i data-lucide="network" class="w-4 h-4"></i>
+                    1. Arquitectura de Red
+                </button>
+                <button onclick="switchTab('capas')" id="tab-btn-capas" class="px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700">
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                    2. Arquitectura por Capas
+                </button>
+                <div class="h-6 w-[1px] bg-slate-800 mx-1 hidden md:block"></div>
+                <button onclick="downloadActivePNG()" id="btn-png-active" class="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/10 border border-emerald-500/20">
+                    <i data-lucide="image" class="w-4 h-4"></i>
+                    PNG (vista actual)
+                </button>
+                <button onclick="downloadActiveSVG()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition-all flex items-center gap-2 border border-slate-700">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    SVG (vista actual)
+                </button>
+                <button onclick="downloadBothPNG()" id="btn-png-both" class="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition-all flex items-center gap-2 shadow-lg shadow-indigo-600/10 border border-indigo-500/20">
+                    <i data-lucide="images" class="w-4 h-4"></i>
+                    Ambos PNG (Google Docs)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Left Sidebar: Context / Specifications Panel -->
+        <div class="lg:col-span-1 flex flex-col gap-4">
+            <!-- Summary Information Card -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl">
+                <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+                    <i data-lucide="info" class="text-indigo-400 w-4 h-4"></i>
+                    Resumen Técnico de Red
+                </h3>
+                <div class="space-y-2 text-xs">
+                    <div class="p-2.5 bg-slate-950/50 rounded-lg border border-slate-800/80">
+                        <div class="text-slate-400 font-medium">Sedes Operativas Conectadas</div>
+                        <div class="text-white font-bold text-sm mt-0.5">3 Agencias <span class="text-indigo-400 font-normal">(Lima, Chiclayo, Arequipa)</span></div>
+                    </div>
+                    <div class="p-2.5 bg-slate-950/50 rounded-lg border border-slate-800/80">
+                        <div class="text-slate-400 font-medium">Topología WAN Principal</div>
+                        <div class="text-white font-bold text-sm mt-0.5">SD-WAN / VPN IPsec <span class="text-indigo-400 font-normal">(Win 400 Mbps)</span></div>
+                    </div>
+                    <div class="p-2.5 bg-slate-950/50 rounded-lg border border-slate-800/80">
+                        <div class="text-slate-400 font-medium">Core de Datos Implementado</div>
+                        <div class="text-white font-bold text-sm mt-0.5">Híbrido <span class="text-indigo-400 font-normal">(Local PostgreSQL / Nube / NoSQL)</span></div>
+                    </div>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-3 leading-relaxed">
+                    <i data-lucide="file-image" class="w-3 h-3 inline -mt-0.5"></i>
+                    Usa <strong class="text-slate-400">Ambos PNG</strong> para insertar en Google Docs: Insertar → Imagen → Subir desde el ordenador.
+                </p>
+            </div>
+
+            <!-- Specs Detail Viewer -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl flex-1 flex flex-col">
+                <h3 class="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">
+                    <i data-lucide="layers" class="text-indigo-400 w-4 h-4"></i>
+                    Visor de Especificaciones
+                </h3>
+                <div id="inspector-placeholder" class="text-xs text-slate-500 text-center py-8 flex-1 flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="mouse-pointer-click" class="w-8 h-8 text-slate-600 animate-bounce"></i>
+                    <span>Haz clic en cualquier nodo o capa del diagrama para ver su descripción técnica y su alineación con la normativa SBS.</span>
+                </div>
+                <!-- Dynamic Content Container -->
+                <div id="inspector-content" class="hidden text-xs space-y-4 flex-1">
+                    <div>
+                        <span id="inspect-category" class="px-2 py-0.5 text-[10px] font-semibold rounded bg-indigo-500/20 text-indigo-300 uppercase border border-indigo-500/30">CAPA</span>
+                        <h4 id="inspect-title" class="text-sm font-bold text-white mt-2">Componente de Red</h4>
+                        <p id="inspect-sub" class="text-slate-400 mt-0.5">Subtítulo o código de parte</p>
+                    </div>
+                    <div class="border-t border-slate-800 my-2"></div>
+                    <div class="space-y-2">
+                        <div class="p-2.5 bg-slate-950/60 rounded border border-slate-800/50">
+                            <span class="text-[10px] text-slate-500 block mb-1">DESCRIPCIÓN TÉCNICA</span>
+                            <span id="inspect-desc" class="text-slate-300 leading-relaxed font-medium">Detalle del rendimiento.</span>
+                        </div>
+                        <div id="inspect-sbs-box" class="p-2.5 bg-indigo-500/10 rounded border border-indigo-500/20">
+                            <span class="text-[10px] text-indigo-400 font-bold block flex items-center gap-1 mb-1">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> ALINEACIÓN / NORMATIVA SBS
+                            </span>
+                            <span id="inspect-sbs" class="text-slate-300 leading-relaxed">Directivas de ciberseguridad y continuidad del negocio.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Workspace: Canvas Area -->
+        <div class="lg:col-span-3 flex flex-col bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+            
+            <!-- Tab 1: Red Híbrida SVG -->
+            <div id="canvas-red" class="flex-1 overflow-auto p-4 flex items-center justify-center">
+                <svg id="svg-red" viewBox="0 0 960 620" class="w-full h-auto max-w-4xl" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Definitions for Grid & Patterns -->
+                    <defs>
+                        <linearGradient id="cloud-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#1e1b4b" />
+                            <stop offset="100%" stop-color="#241432" />
+                        </linearGradient>
+                        <linearGradient id="node-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#1e293b" />
+                            <stop offset="100%" stop-color="#0f172a" />
+                        </linearGradient>
+                        <!-- Grid pattern for background -->
+                        <pattern id="inner-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.5" stroke-dasharray="2,2"/>
+                        </pattern>
+                        <!-- Drop Shadow Filter -->
+                        <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                            <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.5"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Background Grid inside SVG -->
+                    <rect width="960" height="620" fill="url(#inner-grid)" />
+
+                    <!-- TITLE CARD FOR EXPORT -->
+                    <text x="30" y="35" fill="#f8fafc" font-size="15" font-family="Inter" font-weight="bold">DIAGRAMA DE ARQUITECTURA DE RED HÍBRIDA MULTI-SEDE</text>
+                    <text x="30" y="52" fill="#94a3b8" font-size="10" font-family="Inter">Enrutamiento VPN IPsec/SD-WAN con Enlaces de Fibra Óptica Dedicados Win Empresas</text>
+
+                    <!-- NETWORK BACKBONE: NUBE HUAWEICLOUD -->
+                    <g transform="translate(480, 80)" class="cursor-pointer" onclick="showInspect('huawei_cloud')">
+                        <rect x="-170" y="-15" width="340" height="150" rx="16" fill="url(#cloud-grad)" stroke="#6366f1" stroke-width="2" filter="url(#shadow)" />
+                        <!-- Cloud Nodes inside -->
+                        <text x="0" y="15" fill="#a5b4fc" font-size="12" font-family="Inter" font-weight="bold" text-anchor="middle">HUAWEI CLOUD (Región Perú)</text>
+                        
+                        <!-- Mini Nodes Inside Cloud -->
+                        <g transform="translate(-110, 45)" onclick="event.stopPropagation(); showInspect('srv_core')">
+                            <rect x="-45" y="0" width="90" height="32" rx="6" fill="#020617" stroke="#334155" stroke-width="1" />
+                            <text x="0" y="14" fill="#38bdf8" font-size="8" font-family="Inter" font-weight="semibold" text-anchor="middle">Core Relacional</text>
+                            <text x="0" y="24" fill="#64748b" font-size="7" font-family="Inter" text-anchor="middle">PostgreSQL - ECS</text>
+                        </g>
+                        <g transform="translate(0, 45)" onclick="event.stopPropagation(); showInspect('srv_replica')">
+                            <rect x="-45" y="0" width="90" height="32" rx="6" fill="#020617" stroke="#334155" stroke-width="1" />
+                            <text x="0" y="14" fill="#34d399" font-size="8" font-family="Inter" font-weight="semibold" text-anchor="middle">Réplica Lectura</text>
+                            <text x="0" y="24" fill="#64748b" font-size="7" font-family="Inter" text-anchor="middle">PostgreSQL - ECS</text>
+                        </g>
+                        <g transform="translate(110, 45)" onclick="event.stopPropagation(); showInspect('srv_contingencia')">
+                            <rect x="-45" y="0" width="90" height="32" rx="6" fill="#020617" stroke="#334155" stroke-width="1" />
+                            <text x="0" y="14" fill="#f43f5e" font-size="8" font-family="Inter" font-weight="semibold" text-anchor="middle">Contingencia</text>
+                            <text x="0" y="24" fill="#64748b" font-size="7" font-family="Inter" text-anchor="middle">MongoDB - ZeroTrust</text>
+                        </g>
+                        <g transform="translate(-50, 95)" onclick="event.stopPropagation(); showInspect('srv_monitoreo')">
+                            <rect x="-45" y="0" width="90" height="28" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="0" y="12" fill="#e2e8f0" font-size="8" font-family="Inter" text-anchor="middle">Prometheus/Zabbix</text>
+                            <text x="0" y="21" fill="#64748b" font-size="7" font-family="Inter" text-anchor="middle">Monitoreo</text>
+                        </g>
+                        <g transform="translate(50, 95)" onclick="event.stopPropagation(); showInspect('cloud_backup')">
+                            <rect x="-45" y="0" width="90" height="28" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="0" y="12" fill="#e2e8f0" font-size="8" font-family="Inter" text-anchor="middle">Cloud Backup (CBR)</text>
+                            <text x="0" y="21" fill="#64748b" font-size="7" font-family="Inter" text-anchor="middle">Bóveda 200 GB</text>
+                        </g>
+                    </g>
+
+                    <!-- CONNECTIVITY LINES: MAIN DEDICATED FIBER CHANNELS (WIN EMPRESAS) -->
+                    <!-- Sede Lima Line -->
+                    <path d="M 215 360 L 215 240 L 410 240 L 410 215" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-dasharray="6,3" />
+                    <!-- Sede Chiclayo Line -->
+                    <path d="M 480 360 L 480 215" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-dasharray="6,3" />
+                    <!-- Sede Arequipa Line -->
+                    <path d="M 745 360 L 745 240 L 550 240 L 550 215" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-dasharray="6,3" />
+
+                    <!-- Active Route Markers -->
+                    <circle cx="410" cy="240" r="4.5" fill="#818cf8" />
+                    <circle cx="550" cy="240" r="4.5" fill="#818cf8" />
+
+                    <!-- SEDE LIMA (HQ & Datacenter Local) -->
+                    <g transform="translate(100, 360)" class="cursor-pointer" onclick="showInspect('sede_lima')">
+                        <rect x="0" y="0" width="230" height="230" rx="12" fill="url(#node-grad)" stroke="#6366f1" stroke-width="1.5" filter="url(#shadow)" />
+                        <rect x="10" y="-10" width="110" height="20" rx="4" fill="#6366f1" />
+                        <text x="65" y="3" fill="#ffffff" font-size="8" font-family="Inter" font-weight="bold" text-anchor="middle">SEDE CENTRAL LIMA</text>
+                        
+                        <!-- PowerEdge T360 Server -->
+                        <g transform="translate(15, 25)" onclick="event.stopPropagation(); showInspect('dell_server')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#4f46e5" stroke-width="1.2" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">Dell PowerEdge T360</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Xeon E-2468 • 64GB ECC • RAID 10</text>
+                        </g>
+
+                        <!-- HPE Aruba JL682A Switch -->
+                        <g transform="translate(15, 75)" onclick="event.stopPropagation(); showInspect('switch_aruba')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#10b981" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">Aruba Instant On 1930 24G</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Enrutamiento L3 Lite • Puertos 10G SFP+</text>
+                            <!-- Visual Connection line from Server to Switch -->
+                            <line x1="180" y1="-5" x2="180" y2="5" stroke="#38bdf8" stroke-width="2" stroke-dasharray="1,1"/>
+                        </g>
+
+                        <!-- FortiGate 60F Border -->
+                        <g transform="translate(15, 125)" onclick="event.stopPropagation(); showInspect('fortigate')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#ef4444" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">FortiGate 60F (Borde/VPN)</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Cifrado Hardware SPU • VPN 4.4 Gbps</text>
+                        </g>
+
+                        <!-- Infrastructure: UPS, Cables -->
+                        <g transform="translate(15, 175)" onclick="event.stopPropagation(); showInspect('ups_vertiv')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Vertiv GXT5</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Online Doble Conv.</text>
+                        </g>
+                        <g transform="translate(120, 175)" onclick="event.stopPropagation(); showInspect('cable_commscope')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Netconnect Cat6</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Cobre Sólido LSZH</text>
+                        </g>
+                    </g>
+
+                    <!-- SEDE CHICLAYO -->
+                    <g transform="translate(365, 360)" class="cursor-pointer" onclick="showInspect('sede_chiclayo')">
+                        <rect x="0" y="0" width="230" height="230" rx="12" fill="url(#node-grad)" stroke="#38bdf8" stroke-width="1.5" filter="url(#shadow)" />
+                        <rect x="10" y="-10" width="100" height="20" rx="4" fill="#38bdf8" />
+                        <text x="60" y="3" fill="#0f172a" font-size="8" font-family="Inter" font-weight="bold" text-anchor="middle">SEDE CHICLAYO</text>
+                        
+                        <!-- Puestos / Cajas Status -->
+                        <g transform="translate(15, 25)">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#334155" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="semibold">Cajas & Back-office</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">VLAN de Cajas / Administración</text>
+                        </g>
+
+                        <!-- HPE Aruba JL682A Switch -->
+                        <g transform="translate(15, 75)" onclick="event.stopPropagation(); showInspect('switch_aruba')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#10b981" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">Aruba Instant On 1930 24G</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Switch L3 Lite • Segmentación local</text>
+                        </g>
+
+                        <!-- FortiGate 60F Border -->
+                        <g transform="translate(15, 125)" onclick="event.stopPropagation(); showInspect('fortigate')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#ef4444" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">FortiGate 60F (Borde/VPN)</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Túnel IPsec SD-WAN (Win 400M)</text>
+                        </g>
+
+                        <!-- Infrastructure: UPS, Cables -->
+                        <g transform="translate(15, 175)" onclick="event.stopPropagation(); showInspect('ups_vertiv')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Vertiv GXT5</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Online Doble Conv.</text>
+                        </g>
+                        <g transform="translate(120, 175)" onclick="event.stopPropagation(); showInspect('cable_commscope')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Netconnect Cat6</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Cobre Sólido LSZH</text>
+                        </g>
+                    </g>
+
+                    <!-- SEDE AREQUIPA -->
+                    <g transform="translate(630, 360)" class="cursor-pointer" onclick="showInspect('sede_arequipa')">
+                        <rect x="0" y="0" width="230" height="230" rx="12" fill="url(#node-grad)" stroke="#f43f5e" stroke-width="1.5" filter="url(#shadow)" />
+                        <rect x="10" y="-10" width="100" height="20" rx="4" fill="#f43f5e" />
+                        <text x="60" y="3" fill="#ffffff" font-size="8" font-family="Inter" font-weight="bold" text-anchor="middle">SEDE AREQUIPA</text>
+                        
+                        <!-- Puestos / Cajas Status -->
+                        <g transform="translate(15, 25)">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#334155" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="semibold">Cajas & Back-office</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">VLAN de Cajas / Administración</text>
+                        </g>
+
+                        <!-- HPE Aruba JL682A Switch -->
+                        <g transform="translate(15, 75)" onclick="event.stopPropagation(); showInspect('switch_aruba')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#10b981" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">Aruba Instant On 1930 24G</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Switch L3 Lite • Segmentación local</text>
+                        </g>
+
+                        <!-- FortiGate 60F Border -->
+                        <g transform="translate(15, 125)" onclick="event.stopPropagation(); showInspect('fortigate')">
+                            <rect x="0" y="0" width="200" height="40" rx="6" fill="#020617" stroke="#ef4444" stroke-width="1" />
+                            <text x="12" y="18" fill="#f8fafc" font-size="10" font-family="Inter" font-weight="bold">FortiGate 60F (Borde/VPN)</text>
+                            <text x="12" y="30" fill="#94a3b8" font-size="8" font-family="Inter">Túnel IPsec SD-WAN (Win 400M)</text>
+                        </g>
+
+                        <!-- Infrastructure: UPS, Cables -->
+                        <g transform="translate(15, 175)" onclick="event.stopPropagation(); showInspect('ups_vertiv')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Vertiv GXT5</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Online Doble Conv.</text>
+                        </g>
+                        <g transform="translate(120, 175)" onclick="event.stopPropagation(); showInspect('cable_commscope')">
+                            <rect x="0" y="0" width="95" height="40" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                            <text x="8" y="16" fill="#e2e8f0" font-size="9" font-family="Inter" font-weight="semibold">Netconnect Cat6</text>
+                            <text x="8" y="28" fill="#64748b" font-size="7" font-family="Inter">Cobre Sólido LSZH</text>
+                        </g>
+                    </g>
+
+                </svg>
+            </div>
+
+            <!-- Tab 2: Arquitectura por Capas SVG (Hidden by default) -->
+            <div id="canvas-capas" class="hidden flex-1 overflow-auto p-4 flex items-center justify-center">
+                <svg id="svg-capas" viewBox="0 0 960 620" class="w-full h-auto max-w-4xl" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Grid and pattern definitions -->
+                        <pattern id="layers-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1e293b" stroke-width="0.5" stroke-dasharray="2,2"/>
+                        </pattern>
+                        <filter id="layer-shadow" x="-5%" y="-5%" width="110%" height="110%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.4"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Background Grid -->
+                    <rect width="960" height="620" fill="url(#layers-grid)" />
+
+                    <!-- TITLE CARD FOR EXPORT -->
+                    <text x="30" y="35" fill="#f8fafc" font-size="17" font-family="Inter" font-weight="bold">DIAGRAMA DE ARQUITECTURA POR CAPAS (SOA / MICROSERVICIOS)</text>
+                    <text x="30" y="52" fill="#94a3b8" font-size="12" font-family="Inter">Flujo Transaccional, Separación de Responsabilidades y Cumplimiento Normativo SBS</text>
+
+                    <!-- CAPA 1: PRESENTACIÓN (FRONTEND MULTICANAL) -->
+                    <g transform="translate(40, 80)" class="cursor-pointer" onclick="showInspect('capa_presentacion')">
+                        <rect width="880" height="94" rx="10" fill="#0f172a" stroke="#4f46e5" stroke-width="1.5" filter="url(#layer-shadow)"/>
+                        <rect x="-1" y="-1" width="190" height="24" rx="4" fill="#4f46e5"/>
+                        <text x="95" y="15" fill="#ffffff" font-size="10" font-family="Inter" font-weight="bold" text-anchor="middle">CAPA DE PRESENTACIÓN</text>
+                        <text x="95" y="36" fill="#818cf8" font-size="10" font-family="Inter" text-anchor="middle">Canales de Acceso (Marca Blanca)</text>
+
+                        <!-- React Native Mobile -->
+                        <g transform="translate(200, 22)" onclick="event.stopPropagation(); showInspect('banca_movil')">
+                            <rect width="180" height="54" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="12" font-family="Inter" font-weight="bold">Banca Móvil</text>
+                            <text x="12" y="32" fill="#38bdf8" font-size="10" font-family="Inter">React Native - iOS & Android</text>
+                            <text x="12" y="45" fill="#64748b" font-size="9" font-family="Inter">Virtual DOM • Rendimiento fluido</text>
+                        </g>
+
+                        <!-- React Web -->
+                        <g transform="translate(400, 22)" onclick="event.stopPropagation(); showInspect('banca_web')">
+                            <rect width="180" height="54" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="12" font-family="Inter" font-weight="bold">Banca Web</text>
+                            <text x="12" y="32" fill="#38bdf8" font-size="10" font-family="Inter">React + TypeScript</text>
+                            <text x="12" y="45" fill="#64748b" font-size="9" font-family="Inter">Portal Responsivo y Cifrado</text>
+                        </g>
+
+                        <!-- Angular Cajas -->
+                        <g transform="translate(600, 22)" onclick="event.stopPropagation(); showInspect('terminal_ventanilla')">
+                            <rect width="250" height="54" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="12" font-family="Inter" font-weight="bold">Terminal Ventanilla / Cajas</text>
+                            <text x="12" y="32" fill="#f43f5e" font-size="10" font-family="Inter">Angular + TypeScript (~25 cajas)</text>
+                            <text x="12" y="45" fill="#64748b" font-size="9" font-family="Inter">Data-binding bidireccional ágil</text>
+                        </g>
+                    </g>
+
+                    <!-- CONNECTORS DOWNWARD 1 TO 2 -->
+                    <path d="M 480 174 L 480 206" fill="none" stroke="#4f46e5" stroke-width="2" />
+                    <polygon points="480,209 476,203 484,203" fill="#4f46e5" />
+
+                    <!-- CAPA 2: APLICACIÓN (LÓGICA / BACKEND / MICROSERVICIOS) -->
+                    <g transform="translate(40, 206)" class="cursor-pointer" onclick="showInspect('capa_aplicacion')">
+                        <rect width="880" height="114" rx="10" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5" filter="url(#layer-shadow)"/>
+                        <rect x="-1" y="-1" width="190" height="24" rx="4" fill="#8b5cf6"/>
+                        <text x="95" y="15" fill="#ffffff" font-size="10" font-family="Inter" font-weight="bold" text-anchor="middle">CAPA DE APLICACIÓN</text>
+                        <text x="95" y="36" fill="#c084fc" font-size="10" font-family="Inter" text-anchor="middle">Lógica de Negocio en Nube</text>
+
+                        <!-- API Gateway -->
+                        <g transform="translate(200, 22)" onclick="event.stopPropagation(); showInspect('api_gateway')">
+                            <rect width="180" height="74" rx="6" fill="#020617" stroke="#8b5cf6" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">API Gateway & Filtros</text>
+                            <text x="12" y="34" fill="#a78bfa" font-size="10" font-family="Inter">JWT • SSL Termination • WAF</text>
+                            <text x="12" y="47" fill="#94a3b8" font-size="9" font-family="Inter">Validaciones JWT centralizadas</text>
+                            <text x="12" y="60" fill="#64748b" font-size="9" font-family="Inter">Protección de inyecciones SQL</text>
+                        </g>
+
+                        <!-- FastAPI Core Services -->
+                        <g transform="translate(400, 22)" onclick="event.stopPropagation(); showInspect('fastapi_core')">
+                            <rect width="450" height="74" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">Orquestador de Microservicios (FastAPI - Python 3.11)</text>
+                            
+                            <!-- Subservices list inside -->
+                            <g transform="translate(10, 30)">
+                                <rect width="100" height="34" rx="4" fill="#0f172a" stroke="#475569" stroke-width="0.5"/>
+                                <text x="50" y="13" fill="#e2e8f0" font-size="9" font-family="Inter" text-anchor="middle" font-weight="semibold">Módulo Transaccional</text>
+                                <text x="50" y="24" fill="#64748b" font-size="8" font-family="Inter" text-anchor="middle">Cuentas, Depósitos</text>
+                            </g>
+                            <g transform="translate(115, 30)">
+                                <rect width="100" height="34" rx="4" fill="#0f172a" stroke="#475569" stroke-width="0.5"/>
+                                <text x="50" y="13" fill="#e2e8f0" font-size="9" font-family="Inter" text-anchor="middle" font-weight="semibold">Evaluación Créditos</text>
+                                <text x="50" y="24" fill="#64748b" font-size="8" font-family="Inter" text-anchor="middle">Scoring automatizado</text>
+                            </g>
+                            <g transform="translate(220, 30)">
+                                <rect width="100" height="34" rx="4" fill="#0f172a" stroke="#475569" stroke-width="0.5"/>
+                                <text x="50" y="13" fill="#e2e8f0" font-size="9" font-family="Inter" text-anchor="middle" font-weight="semibold">Auditoría SBS 504-2021</text>
+                                <text x="50" y="24" fill="#38bdf8" font-size="8" font-family="Inter" text-anchor="middle">LogAuditoria Inalterable</text>
+                            </g>
+                            <g transform="translate(325, 30)">
+                                <rect width="110" height="34" rx="4" fill="#0f172a" stroke="#ef4444" stroke-width="0.5"/>
+                                <text x="55" y="13" fill="#fca5a5" font-size="9" font-family="Inter" text-anchor="middle" font-weight="bold">Script Sincronización</text>
+                                <text x="55" y="24" fill="#ef4444" font-size="8" font-family="Inter" text-anchor="middle">Resiliencia NoSQL</text>
+                            </g>
+                        </g>
+                    </g>
+
+                    <!-- CONNECTORS DOWNWARD 2 TO 3 -->
+                    <path d="M 480 320 L 480 352" fill="none" stroke="#8b5cf6" stroke-width="2" />
+                    <polygon points="480,355 476,349 484,349" fill="#8b5cf6" />
+
+                    <!-- CAPA 3: DATOS (PERSISTENCIA E INTEGRIDAD) -->
+                    <g transform="translate(40, 352)" class="cursor-pointer" onclick="showInspect('capa_datos')">
+                        <rect width="880" height="114" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="1.5" filter="url(#layer-shadow)"/>
+                        <rect x="-1" y="-1" width="190" height="24" rx="4" fill="#10b981"/>
+                        <text x="95" y="15" fill="#ffffff" font-size="10" font-family="Inter" font-weight="bold" text-anchor="middle">CAPA DE DATOS</text>
+                        <text x="95" y="36" fill="#34d399" font-size="10" font-family="Inter" text-anchor="middle">Esquema Híbrido Activo</text>
+
+                        <!-- PostgreSQL Core Bancario -->
+                        <g transform="translate(200, 22)" onclick="event.stopPropagation(); showInspect('srv_core')">
+                            <rect width="180" height="74" rx="6" fill="#020617" stroke="#10b981" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">Core Bancario PostgreSQL</text>
+                            <text x="12" y="34" fill="#34d399" font-size="10" font-family="Inter">Motor Relacional Principal</text>
+                            <text x="12" y="47" fill="#94a3b8" font-size="9" font-family="Inter">Huawei ECS - Transaccional</text>
+                            <text x="12" y="60" fill="#64748b" font-size="9" font-family="Inter">Alta disponibilidad multi-AZ</text>
+                        </g>
+
+                        <!-- Read Replica Cloud -->
+                        <g transform="translate(400, 22)" onclick="event.stopPropagation(); showInspect('srv_replica')">
+                            <rect width="180" height="74" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">Réplica Sincronizada</text>
+                            <text x="12" y="34" fill="#34d399" font-size="10" font-family="Inter">Consultas y Lectura de Saldos</text>
+                            <text x="12" y="47" fill="#94a3b8" font-size="9" font-family="Inter">Huawei ECS - Separación de carga</text>
+                            <text x="12" y="60" fill="#64748b" font-size="9" font-family="Inter">Aísla tráfico de consultas</text>
+                        </g>
+
+                        <!-- MongoDB & Dell RAID 10 Locals -->
+                        <g transform="translate(600, 22)" onclick="event.stopPropagation(); showInspect('dell_server')">
+                            <rect width="250" height="74" rx="6" fill="#020617" stroke="#ef4444" stroke-width="1"/>
+                            <text x="12" y="19" fill="#fca5a5" font-size="11" font-family="Inter" font-weight="bold">Persistencia Local & Contingencia</text>
+                            <text x="12" y="34" fill="#f8fafc" font-size="10" font-family="Inter">Dell PowerEdge T360 (Lima) • RAID 10</text>
+                            <text x="12" y="47" fill="#38bdf8" font-size="9" font-family="Inter">Sincronización LAN física menor a 1 ms</text>
+                            <text x="12" y="60" fill="#ef4444" font-size="9" font-family="Inter">Failover automatizado a MongoDB Nube</text>
+                        </g>
+                    </g>
+
+                    <!-- CONNECTORS DOWNWARD 3 TO 4 -->
+                    <path d="M 480 466 L 480 496" fill="none" stroke="#10b981" stroke-width="2" />
+                    <polygon points="480,499 476,493 484,493" fill="#10b981" />
+
+                    <!-- CAPA 4: INFRAESTRUCTURA Y REDES (COMUNICACIÓN) -->
+                    <g transform="translate(40, 496)" class="cursor-pointer" onclick="showInspect('capa_infraestructura')">
+                        <rect width="880" height="94" rx="10" fill="#0f172a" stroke="#64748b" stroke-width="1.5" filter="url(#layer-shadow)"/>
+                        <rect x="-1" y="-1" width="190" height="24" rx="4" fill="#64748b"/>
+                        <text x="95" y="15" fill="#ffffff" font-size="10" font-family="Inter" font-weight="bold" text-anchor="middle">CAPA DE COMUNICACIÓN</text>
+                        <text x="95" y="36" fill="#94a3b8" font-size="10" font-family="Inter" text-anchor="middle">Infraestructura Física y Canales WAN</text>
+
+                        <!-- Win Empresas Fiber -->
+                        <g transform="translate(200, 22)" onclick="event.stopPropagation(); showInspect('enlace_fibra')">
+                            <rect width="180" height="54" rx="6" fill="#020617" stroke="#475569" stroke-width="1"/>
+                            <text x="12" y="19" fill="#e2e8f0" font-size="11" font-family="Inter" font-weight="bold">Fibra Win 400 Mbps</text>
+                            <text x="12" y="32" fill="#94a3b8" font-size="10" font-family="Inter">Enlace Dedicado Simétrico 1:1</text>
+                            <text x="12" y="45" fill="#10b981" font-size="9" font-family="Inter">Garantía SLA del 99.7%</text>
+                        </g>
+
+                        <!-- FortiGate VPN & SD-WAN -->
+                        <g transform="translate(400, 22)" onclick="event.stopPropagation(); showInspect('fortigate')">
+                            <rect width="180" height="54" rx="6" fill="#020617" stroke="#ef4444" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">VPN IPsec FortiGate</text>
+                            <text x="12" y="32" fill="#f43f5e" font-size="10" font-family="Inter">Túneles seguros automatizados</text>
+                            <text x="12" y="45" fill="#64748b" font-size="9" font-family="Inter">Inspección de peticiones profunda</text>
+                        </g>
+
+                        <!-- LAN Aruba y CommScope -->
+                        <g transform="translate(600, 22)" onclick="event.stopPropagation(); showInspect('switch_aruba')">
+                            <rect width="250" height="54" rx="6" fill="#020617" stroke="#10b981" stroke-width="1"/>
+                            <text x="12" y="19" fill="#f8fafc" font-size="11" font-family="Inter" font-weight="bold">Conmutación Aruba & CommScope</text>
+                            <text x="12" y="32" fill="#34d399" font-size="10" font-family="Inter">VLANs locales • Cableado LSZH</text>
+                            <text x="12" y="45" fill="#64748b" font-size="9" font-family="Inter">Enrutamiento de puestos sin saturar firewall</text>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Absolute Watermark for Report Integration -->
+            <div class="absolute bottom-4 right-4 text-[10px] text-slate-600 select-none">
+                Cooperativa Red Híbrida — Arquitectura de Sistemas © 2026
+            </div>
+        </div>
+    </main>
+
+    <!-- Project Metadata Cards Section (Footer area) -->
+    <footer class="border-t border-slate-800 bg-slate-950 px-6 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+            <div>
+                Diseñado exclusivamente para el <span class="text-indigo-400 font-semibold">Informe Académico sobre Arquitectura de Redes y Sistemas</span>.
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i> Alineado a Directivas SBS</span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i> Tolerante a Fallas</span>
+                <span class="flex items-center gap-1"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-500"></i> Estructura Simplificada</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Database Specs Objects Script -->
+    <script>
+        // Tab system
+        let activeTab = 'red';
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            const btnRed = document.getElementById('tab-btn-red');
+            const btnCapas = document.getElementById('tab-btn-capas');
+            const cvRed = document.getElementById('canvas-red');
+            const cvCapas = document.getElementById('canvas-capas');
+
+            if (tabId === 'red') {
+                btnRed.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/10 border border-indigo-500/30";
+                btnCapas.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700";
+                cvRed.classList.remove('hidden');
+                cvCapas.classList.add('hidden');
+            } else {
+                btnCapas.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/10 border border-indigo-500/30";
+                btnRed.className = "px-4 py-2 text-xs font-semibold rounded-lg transition-all flex items-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700";
+                cvCapas.classList.remove('hidden');
+                cvRed.classList.add('hidden');
+            }
+        }
+
+        // Database/JSON containing exact technical data requested by the user, COMPLETELY IGNORING COST metrics
+        const specs = {
+            fortigate: {
+                category: "Seguridad y Enrutamiento de Borde",
+                title: "Fortinet FortiGate 60F",
+                sub: "Código de hardware: FG-60F-BDL-950-12 (Sedes Lima, Chiclayo y Arequipa)",
+                desc: "Equipado con un procesador SPU FortiASIC SOC4 propietario acelerado por hardware. Gestiona un rendimiento de VPN IPsec de 4.4 Gbps y hasta 200 túneles seguros simultáneos sin inducir latencias lógicas por software en el tráfico transaccional.",
+                sbs: "Permite definir políticas rigurosas en Capa 7 e inspección SSL/TLS profunda a una tasa de 310 Mbps, aislando y protegiendo el tráfico transaccional de cajas contra inyecciones de código malicioso HTTPS hacia la base de datos."
+            },
+            switch_aruba: {
+                category: "Conmutación y Distribución LAN",
+                title: "HPE Aruba Instant On 1930 24G",
+                sub: "Código de parte: JL682A (Instalados en racks locales de sedes)",
+                desc: "Capacidad de conmutación de 128 Gbps con soporte de 255 VLANs activas de manera simultánea. Dispone de 4 ranuras SFP+ de 10 GbE para enlaces de cobre de alta velocidad (SFP+ DAC) con el servidor de réplicas PowerEdge.",
+                sbs: "Optimiza la red local al descentralizar el tráfico inter-VLAN mediante enrutamiento básico estático IPv4 (L3 Lite, hasta 32 rutas), evitando sobrecargar el firewall perimetral con flujos internos administrativos."
+            },
+            cable_commscope: {
+                category: "Cableado Estructurado Horizontal",
+                title: "CommScope Netconnect Cat6",
+                sub: "Modelo: 1427070-2 (Bobina 100% Cobre Sólido Electrolítico)",
+                desc: "Conductor de calibre 23 AWG puro que mitiga la atenuación de la señal y asegura una transmisión estable de datos de baja pérdida física. Totalmente compatible con alimentación remota Power over Ethernet (PoE) para APs y telefonía IP.",
+                sbs: "Chaqueta de baja emisión de humos y cero halógenos (LSZH), obligatoria para el cumplimiento estricto del Reglamento Nacional de Edificaciones de Perú y directivas de seguridad física en entidades financieras estatales."
+            },
+            ups_vertiv: {
+                category: "Soporte de Energía Eléctrica Regulada",
+                title: "Vertiv Liebert GXT5-2000IRT2UXL",
+                sub: "UPS Online de Doble Conversión Continua (Montaje en rack 2U)",
+                desc: "Garantiza tolerancia a fallos de alimentación comercial con un tiempo de conmutación de cero retardo (0 ms). Proporciona energía sinusoidal pura para proteger las memorias RAM ECC del servidor y evitar reinicios lógicos en firewalls de borde.",
+                sbs: "Integrado directamente con el servidor de monitoreo Prometheus a través de tarjetas SNMP. Envía alertas automáticas de nivel de batería (10.7 minutos de autonomía a media carga) para activar el guardado y apagado seguro de la base de datos."
+            },
+            dell_server: {
+                category: "Servidor Físico de Base de Datos Local",
+                title: "Dell PowerEdge T360 (Sede Lima)",
+                sub: "Persistencia física para réplica y resiliencia",
+                desc: "Procesador Intel Xeon E-2468 (2.6 GHz), 64 GB RAM DDR5 ECC UDIMM y arreglo de discos duros RAID 10 redundante de alto rendimiento basado en 4 SSDs SATA de 960 GB.",
+                sbs: "Alberga las réplicas locales e índices sincronizados de las bases de datos para garantizar la continuidad del negocio ante fallas críticas de red externa. Enlazado a 10 GbE en menos de 1 ms al switch de distribución."
+            },
+            srv_core: {
+                category: "Persistencia Nube Principal",
+                title: "Core PostgreSQL (SRV-CoreBancario)",
+                sub: "Instancia Huawei Cloud ECS General computing-plus C9",
+                desc: "Instancia virtual elástica de base de datos relacional PostgreSQL provista de 4 vCPUs, 16 GiB de RAM, y disco SSD de 100 GB para soportar la integridad de transacciones críticas concurrentes.",
+                sbs: "Cumplimiento del 99.90% de disponibilidad anual exigido por la directiva de la SBS, respaldado mediante zonas de disponibilidad geográfica en la nube."
+            },
+            srv_replica: {
+                category: "Réplica de Lectura Nube",
+                title: "Réplica de Saldos (SRV-Data-Replica)",
+                sub: "Instancia Huawei Cloud ECS C9 dedicada a consultas",
+                desc: "Servidor elástico con 2 vCPUs, 8 GiB de RAM y almacenamiento SSD de 100 GB. Actúa como réplica de lectura del core PostgreSQL para canalizar consultas concurrentes masivas.",
+                sbs: "Aísla el tráfico masivo de consultas (estados de cuenta e histórico de préstamos) para evitar degradaciones de rendimiento y cuellos de botella en el nodo relacional del core bancario transaccional."
+            },
+            srv_contingencia: {
+                category: "Persistencia Alterna Nube",
+                title: "Contingencia MongoDB (SRV-Contingencia)",
+                sub: "Instancia Huawei Cloud ECS C9 - NoSQL MongoDB",
+                desc: "Instancia en nube de 2 vCPUs, 8 GiB de RAM y disco SSD de 100 GB configurada bajo arquitectura de confianza cero (Zero Trust) y cifrado asíncrono de registros.",
+                sbs: "Permite almacenar temporalmente de forma estructurada las transacciones críticas en caso de desastre o indisponibilidad completa del motor PostgreSQL relacional."
+            },
+            cloud_backup: {
+                category: "Resguardo y Recuperación",
+                title: "Bóveda Cloud Backup (Huawei CBR)",
+                sub: "Servicio de Backup and Recovery Automatizado",
+                desc: "Almacenamiento elástico e inalterable dedicado a almacenar backups diarios de las bases de datos, con capacidad estándar de 200 GB y directiva automatizada de restauración.",
+                sbs: "Cumple con las exigencias de almacenamiento histórico inalterable de logs transaccionales para auditoría forense informática bancaria."
+            },
+            srv_monitoreo: {
+                category: "Infraestructura de Telemetría",
+                title: "Métricas y Alertas (SRV-Monitoreo)",
+                sub: "Instancia Huawei Cloud ECS C9 - Prometheus / Zabbix",
+                desc: "Servidor virtual de telemetría de 2 vCPUs, 4 GiB de RAM y disco SSD de 50 GB. Recolecta métricas continuas de rendimiento, latencia WAN, estado de túneles IPsec de los firewalls y alertas SNMP de los UPS locales.",
+                sbs: "Asegura la visibilidad en tiempo real para la toma de decisiones críticas por parte de TI y auditores de sistemas."
+            },
+            banca_movil: {
+                category: "Canal de Acceso Móvil",
+                title: "Banca Móvil de Socios (React Native)",
+                sub: "Aplicación Nativa para iOS y Android",
+                desc: "Plataforma nativa compilada a partir de un único código base. Permite la visualización de saldos, movimientos y solicitudes de créditos con actualización asíncrona mediante el motor de Virtual DOM.",
+                sbs: "Implementa cifrado SSL Pinning de extremo a extremo, almacenamiento local de llaves y autenticación biométrica de socios."
+            },
+            banca_web: {
+                category: "Canal de Acceso Web",
+                title: "Banca por Internet (React + TS)",
+                sub: "Portal Web Responsivo de Socios",
+                desc: "Desarrollada en React y tipado estricto con TypeScript. Ofrece una experiencia web responsiva para socios, con validaciones lógicas del lado del cliente.",
+                sbs: "Sesión protegida por JWT con tiempo de expiración riguroso y directivas HTTPS HSTS con cifrado TLS 1.3 de última generación."
+            },
+            terminal_ventanilla: {
+                category: "Canal Interno de Cajas",
+                title: "Terminal de Cajas y Agencias (Angular)",
+                sub: "Aplicación de Ventanilla (~25 terminales concurrentes)",
+                desc: "Plataforma local basada en Angular y TypeScript con enlace de datos bidireccional ágil para agilizar las operaciones de depósito, retiro e inscripciones.",
+                sbs: "Se ejecuta en el entorno controlado de red LAN interna de la cooperativa, aislada de la navegación libre por internet comercial."
+            },
+            fastapi_core: {
+                category: "Capa de Aplicación - Microservicios",
+                title: "Microservicios en FastAPI (Python 3.11)",
+                sub: "Lógica de backend asíncrona y orquestación",
+                desc: "Contiene la lógica de cálculo financiero y orquestación de llamadas concurrentes no bloqueantes (Async I/O) apoyado en el motor de Starlette ASGI.",
+                sbs: "Tipado estricto con Pydantic que valida los datos entrantes de los canales móviles y web, sirviendo de cortafuegos lógico contra inyecciones."
+            },
+            api_gateway: {
+                category: "Capa de Aplicación - Borde Lógico",
+                title: "API Gateway & Seguridad",
+                sub: "Punto de entrada único al ecosistema backend",
+                desc: "Gestiona firma digital, límites de tasa de peticiones (Rate Limiting) para prevenir sobrecargas de peticiones de red y verificación de sesión.",
+                sbs: "Estructurado para aislar y sanitizar los parámetros antes de que interactúen con el motor relacional de base de datos de la cooperativa."
+            },
+            sede_lima: {
+                category: "Ubicación Física de Red",
+                title: "Sede Central (R-LIMA)",
+                sub: "Datacenter Local principal e infraestructura de red",
+                desc: "Contiene la bobina estructurada CommScope, el switch Aruba de 24 puertos administrable con transceptor de alta velocidad, el firewall FortiGate y el servidor local Dell T360.",
+                sbs: "Alineación de seguridad física de racks bajo llave, sistema de energía redundante Vertiv y cableado libre de halógenos LSZH."
+            },
+            sede_chiclayo: {
+                category: "Ubicación Física de Red",
+                title: "Agencia Chiclayo (R-CHI)",
+                sub: "Estructuración local y conectividad",
+                desc: "Equipada con switch HPE Aruba de distribución, cortafuegos FortiGate 60F perimetral conectado al enlace dedicado Win y soporte UPS Vertiv.",
+                sbs: "Mitigación de riesgos de disponibilidad local mediante redundancia l3 lite y túneles seguros IPsec directos a la nube."
+            },
+            sede_arequipa: {
+                category: "Ubicación Física de Red",
+                title: "Agencia Arequipa (R-AQP)",
+                sub: "Estructuración local y conectividad",
+                desc: "Equipada con switch HPE Aruba de distribución, cortafuegos FortiGate 60F perimetral conectado al enlace dedicado Win y soporte UPS Vertiv.",
+                sbs: "Mitigación de riesgos de disponibilidad local mediante redundancia l3 lite y túneles seguros IPsec directos a la nube."
+            },
+            enlace_fibra: {
+                category: "Capa de Red - Transporte WAN",
+                title: "Fibra Óptica Dedicada Win Empresas",
+                sub: "Canal principal WAN simétrico (400 Mbps)",
+                desc: "Fibra óptica con IP pública fija, soporte técnico prioritario 24x7 y acuerdo de nivel de servicio (SLA) del 99.7%. Canal único por el que viajan los túneles seguros.",
+                sbs: "Canal portador cifrado con algoritmos robustos por hardware, asegurando que las operaciones bancarias no viajen en texto plano por internet pública."
+            },
+            capa_presentacion: {
+                category: "Capa de Software SOA",
+                title: "Capa de Presentación (Frontend)",
+                sub: "Separación estructural de cara al usuario",
+                desc: "Consiste en las aplicaciones móviles y portales web independientes que recopilan entradas del usuario pero no interactúan con bases de datos ni lógicas.",
+                sbs: "Garantiza que una vulnerabilidad visual o del navegador del usuario no exponga la capa lógica o la persistencia de datos relacionales."
+            },
+            capa_aplicacion: {
+                category: "Capa de Software SOA",
+                title: "Capa de Aplicación (Backend)",
+                sub: "Cerebro funcional y de validaciones lógicas",
+                desc: "Microservicios que validan e imponen las reglas del negocio, el scoring automatizado, límites de caja, y auditorías lógicas inalterables.",
+                sbs: "La lógica de negocio está totalmente separada para evitar que manipulaciones en la interfaz de usuario se repliquen de forma directa."
+            },
+            capa_datos: {
+                category: "Capa de Software SOA",
+                title: "Capa de Datos (Persistencia)",
+                sub: "Integridad y replicabilidad relacional/NoSQL",
+                desc: "Abarca todo el espectro de persistencia, incluyendo el core PostgreSQL en la nube, las réplicas locales RAID 10 y el nodo MongoDB de contingencia.",
+                sbs: "Cumplimiento estricto de retención e integridad de datos a prueba de cortes eléctricos, incendios y ataques informáticos perimetrales."
+            },
+            capa_infraestructura: {
+                category: "Capa de Software SOA",
+                title: "Capa de Comunicación e Infraestructura",
+                sub: "Enlaces, enrutamiento, conmutación y cableado físico",
+                desc: "Agrupa el transporte de datos perimetrales, switches de capa de acceso, enlaces de fibra dedicados y cableado físico horizontal.",
+                sbs: "Salvaguarda el flujo continuo de transacciones mediante aislamiento estricto de VLANs de puestos, gerencia y cajas locales."
+            },
+            huawei_cloud: {
+                category: "Infraestructura en la Nube",
+                title: "Huawei Cloud (Región Perú)",
+                sub: "Nube elástica e infraestructura geográfica nacional",
+                desc: "Aloja las bases de datos transaccionales de la cooperativa en zonas de disponibilidad interconectadas con fibra dedicada redundante.",
+                sbs: "Cumplimiento con baja latencia en territorio peruano al operar en el datacenter de la Región Perú, facilitando auditorías de control tecnológico estatales."
+            }
+        };
+
+        function showInspect(key) {
+            const data = specs[key];
+            if (!data) return;
+
+            // Hide placeholder, show content
+            document.getElementById('inspector-placeholder').classList.add('hidden');
+            document.getElementById('inspector-content').classList.remove('hidden');
+
+            // Populate data
+            document.getElementById('inspect-category').innerText = data.category;
+            document.getElementById('inspect-title').innerText = data.title;
+            document.getElementById('inspect-sub').innerText = data.sub;
+            document.getElementById('inspect-desc').innerText = data.desc;
+            
+            // Handle SBS box visibility
+            const sbsBox = document.getElementById('inspect-sbs-box');
+            if (data.sbs) {
+                sbsBox.classList.remove('hidden');
+                document.getElementById('inspect-sbs').innerText = data.sbs;
+            } else {
+                sbsBox.classList.add('hidden');
+            }
+        }
+
+        // Downloader Helpers: SVG y PNG (alta resolución para Google Docs / Word)
+        const EXPORT_SCALE = 2; // 1920×1240 px — nítido al insertar en documentos
+
+        function prepareSvgClone(svgId) {
+            const originalSvg = document.getElementById(svgId);
+            const svgClone = originalSvg.cloneNode(true);
+
+            const style = document.createElement('style');
+            style.textContent = `
+                text { font-family: 'Inter', Arial, sans-serif; }
+            `;
+            svgClone.insertBefore(style, svgClone.firstChild);
+            svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+            return svgClone;
+        }
+
+        function triggerDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 500);
+        }
+
+        function setExportLoading(loading) {
+            ['btn-png-active', 'btn-png-both'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.disabled = loading;
+                btn.classList.toggle('opacity-60', loading);
+                btn.classList.toggle('cursor-wait', loading);
+            });
+        }
+
+        function exportSvgToPng(svgId, filename, scale = EXPORT_SCALE) {
+            return new Promise((resolve, reject) => {
+                const originalSvg = document.getElementById(svgId);
+                const svgClone = prepareSvgClone(svgId);
+
+                const vb = originalSvg.viewBox.baseVal;
+                const w = vb.width || 960;
+                const h = vb.height || 620;
+
+                svgClone.setAttribute('width', String(w * scale));
+                svgClone.setAttribute('height', String(h * scale));
+
+                const svgData = new XMLSerializer().serializeToString(svgClone);
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const svgUrl = URL.createObjectURL(svgBlob);
+
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w * scale;
+                    canvas.height = h * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(svgUrl);
+                    canvas.toBlob(
+                        blob => {
+                            if (!blob) {
+                                reject(new Error('No se pudo generar PNG'));
+                                return;
+                            }
+                            triggerDownload(blob, filename);
+                            resolve();
+                        },
+                        'image/png',
+                        1.0
+                    );
+                };
+                img.onerror = () => {
+                    URL.revokeObjectURL(svgUrl);
+                    reject(new Error('Error al rasterizar SVG'));
+                };
+                img.src = svgUrl;
+            });
+        }
+
+        async function downloadActivePNG() {
+            setExportLoading(true);
+            try {
+                const isRed = activeTab === 'red';
+                await exportSvgToPng(
+                    isRed ? 'svg-red' : 'svg-capas',
+                    isRed
+                        ? 'Diagrama_Arquitectura_Red_Hibrida.png'
+                        : 'Diagrama_Arquitectura_Por_Capas.png'
+                );
+            } catch (e) {
+                alert('No se pudo exportar PNG. Prueba con el botón SVG o recarga la página.');
+                console.error(e);
+            } finally {
+                setExportLoading(false);
+            }
+        }
+
+        async function downloadBothPNG() {
+            setExportLoading(true);
+            try {
+                await exportSvgToPng('svg-red', 'Diagrama_1_Arquitectura_Red_Hibrida.png');
+                await new Promise(r => setTimeout(r, 400));
+                await exportSvgToPng('svg-capas', 'Diagrama_2_Arquitectura_Por_Capas.png');
+            } catch (e) {
+                alert('No se pudieron exportar ambos PNG. Revisa la consola o usa SVG.');
+                console.error(e);
+            } finally {
+                setExportLoading(false);
+            }
+        }
+
+        function downloadActiveSVG() {
+            const svgId = activeTab === 'red' ? 'svg-red' : 'svg-capas';
+            const svgClone = prepareSvgClone(svgId);
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            triggerDownload(
+                svgBlob,
+                activeTab === 'red'
+                    ? 'Diagrama_Arquitectura_Red_Hibrida.svg'
+                    : 'Diagrama_Arquitectura_Por_Capas.svg'
+            );
+        }
+
+        // Lucide initialization
+        window.onload = function() {
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

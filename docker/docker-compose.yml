@@ -1,0 +1,266 @@
+# PC3 Cooperativa Financiera - Stack de datos simulado en Azure
+# 4 contenedores principales + auxiliares (pgAdmin, sync, exporter)
+# Segmentación con 5 redes Docker (equivalente académico a ACLs/Zero Trust)
+
+x-common-env: &common-env
+  POSTGRES_USER: coop_admin
+  POSTGRES_PASSWORD: core_pass_2026
+  POSTGRES_DB: core_bancario
+  REPLICATION_USER: replicator
+  REPLICATION_PASSWORD: replica_pass_2026
+
+services:
+  # ============================================================
+  # CONTENEDOR 1: SRV-CoreBancario (PostgreSQL Primary)
+  # Subred equivalente: 192.168.200.0/24
+  # Puerto interno: 5432 (NO expuesto al host)
+  # ============================================================
+  core-db:
+    image: postgres:16
+    container_name: core-db
+    hostname: srv-corebancario
+    environment:
+      <<: *common-env
+      PGDATA: /var/lib/postgresql/data
+      REPLICATION_PASSWORD: replica_pass_2026
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - max_wal_senders=5
+      - -c
+      - max_replication_slots=5
+      - -c
+      - hot_standby=on
+      - -c
+      - listen_addresses=*
+    volumes:
+      - core_data:/var/lib/postgresql/data
+      - ./postgres/core/init/00-replication.sql:/docker-entrypoint-initdb.d/00-replication.sql:ro
+      - ./postgres/core/init/01-pg_hba.sh:/docker-entrypoint-initdb.d/01-pg_hba.sh:ro
+      - ../database/01-schema.sql:/docker-entrypoint-initdb.d/02-schema.sql:ro
+      - ../database/02-audit-triggers.sql:/docker-entrypoint-initdb.d/03-audit-triggers.sql:ro
+      - ../database/03-seed.sql:/docker-entrypoint-initdb.d/04-seed.sql:ro
+      - ../database/05-socio-auth.sql:/docker-entrypoint-initdb.d/05-socio-auth.sql:ro
+      - ../database/06-update-passwords.sql:/docker-entrypoint-initdb.d/06-update-passwords.sql:ro
+    networks:
+      net_core:
+        ipv4_address: 172.28.200.10
+      net_replica:
+        ipv4_address: 172.28.201.10
+      net_admin:
+        ipv4_address: 172.28.210.10
+      net_monitoreo:
+        ipv4_address: 172.28.220.10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coop_admin -d core_bancario"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # CONTENEDOR 2: SRV-Backup (PostgreSQL Read Replica)
+  # Réplica streaming del Core - solo lectura
+  # ============================================================
+  replica-db:
+    image: postgres:16
+    container_name: replica-db
+    hostname: srv-backup
+    environment:
+      <<: *common-env
+      PRIMARY_HOST: core-db
+      PRIMARY_PORT: 5432
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - replica_data:/var/lib/postgresql/data
+      - ./postgres/replica/init-replica.sh:/init-replica.sh:ro
+    entrypoint: ["/bin/bash", "/init-replica.sh"]
+    depends_on:
+      core-db:
+        condition: service_healthy
+    networks:
+      net_replica:
+        ipv4_address: 172.28.201.20
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coop_admin -d core_bancario"]
+      interval: 15s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+    restart: unless-stopped
+
+  # ============================================================
+  # CONTENEDOR 3: SRV-Contingencia (MongoDB NoSQL)
+  # Red aislada Zero Trust (internal: true)
+  # Puerto 27017 solo accesible dentro de net_contingencia
+  # ============================================================
+  contingencia-db:
+    image: mongo:7
+    container_name: contingencia-db
+    hostname: srv-contingencia
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo/init/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      net_contingencia:
+        ipv4_address: 172.28.230.10
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  # ============================================================
+  # CONTENEDOR 4: SRV-Monitoreo (Prometheus)
+  # Monitorea latencia y disponibilidad del Core
+  # ============================================================
+  monitoreo:
+    image: prom/prometheus:v2.51.0
+    container_name: monitoreo
+    hostname: srv-monitoreo
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      net_monitoreo:
+        ipv4_address: 172.28.220.20
+      net_core:
+        ipv4_address: 172.28.200.40
+    depends_on:
+      - postgres-exporter
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # --- Auxiliar: postgres_exporter para métricas del Core ---
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://coop_admin:core_pass_2026@172.28.220.10:5432/core_bancario?sslmode=disable"
+    networks:
+      net_monitoreo:
+        ipv4_address: 172.28.220.30
+    depends_on:
+      core-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- Auxiliar: pgAdmin para ERD y administración ---
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@coop.pe
+      PGADMIN_DEFAULT_PASSWORD: admin2026
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      net_admin:
+        ipv4_address: 172.28.210.20
+    depends_on:
+      core-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- Auxiliar: sincronización Core → MongoDB contingencia ---
+  sync-contingencia:
+    build:
+      context: .
+      dockerfile: sync/Dockerfile
+    container_name: sync-contingencia
+    environment:
+      CORE_HOST: core-db
+      CORE_PORT: 5432
+      CORE_USER: coop_admin
+      CORE_PASSWORD: core_pass_2026
+      CORE_DB: core_bancario
+      MONGO_HOST: contingencia-db
+      MONGO_PORT: 27017
+      MONGO_DB: contingencia_coop
+      SYNC_INTERVAL: 120
+    depends_on:
+      core-db:
+        condition: service_healthy
+      contingencia-db:
+        condition: service_healthy
+    networks:
+      net_core:
+        ipv4_address: 172.28.200.30
+      net_contingencia:
+        ipv4_address: 172.28.230.20
+    restart: unless-stopped
+
+networks:
+  # Subred Core Bancario - 192.168.200.0/24 equivalente
+  net_core:
+    name: coop_net_core
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.200.0/24
+
+  # Enlace réplica cifrado (internal - sin acceso externo)
+  net_replica:
+    name: coop_net_replica
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.201.0/24
+
+  # Zero Trust - contingencia aislada (sin gateway a Internet)
+  net_contingencia:
+    name: coop_net_contingencia
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.230.0/24
+
+  # Red de monitoreo (internal)
+  net_monitoreo:
+    name: coop_net_monitoreo
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.28.220.0/24
+
+  # Acceso administrativo (pgAdmin expuesto)
+  net_admin:
+    name: coop_net_admin
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.210.0/24
+
+volumes:
+  core_data:
+    name: coop_core_data
+  replica_data:
+    name: coop_replica_data
+  mongo_data:
+    name: coop_mongo_data
+  prometheus_data:
+    name: coop_prometheus_data
+  pgadmin_data:
+    name: coop_pgadmin_data

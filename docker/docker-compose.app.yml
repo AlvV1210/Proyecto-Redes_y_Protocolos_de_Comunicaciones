@@ -1,0 +1,198 @@
+# PC3 - Capa de aplicación y presentación (extiende docker-compose.yml)
+# Uso: docker compose -f docker-compose.yml -f docker-compose.app.yml up -d --build
+
+x-app-env: &app-env
+  POSTGRES_HOST: core-db
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: coop_admin
+  POSTGRES_PASSWORD: core_pass_2026
+  POSTGRES_DB: core_bancario
+  POSTGRES_REPLICA_HOST: replica-db
+  JWT_SECRET: coop_jwt_secret_academico_2026
+  REDIS_URL: redis://redis:6379/0
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    hostname: srv-redis
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.10
+    restart: unless-stopped
+
+  nginx-gateway:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    hostname: srv-gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-gateway/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - gateway-auth
+      - cuentas-svc
+      - banca-web
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.5
+    restart: unless-stopped
+
+  # Traefik deshabilitado — en Docker Desktop Windows falla el socket.
+  # Usar nginx-gateway arriba como API Gateway.
+  traefik:
+    image: traefik:v3.0
+    container_name: traefik
+    profiles: ["traefik"]
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "8081:80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.6
+    restart: unless-stopped
+
+  gateway-auth:
+    build:
+      context: ../backend
+      dockerfile: gateway/Dockerfile
+    container_name: gateway-auth
+    environment:
+      <<: *app-env
+    depends_on:
+      core-db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.20
+      net_core:
+        ipv4_address: 172.28.200.50
+    restart: unless-stopped
+
+  cuentas-svc:
+    build:
+      context: ../backend
+      dockerfile: services/cuentas/Dockerfile
+    container_name: cuentas-svc
+    environment:
+      <<: *app-env
+    depends_on:
+      core-db:
+        condition: service_healthy
+      replica-db:
+        condition: service_healthy
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.21
+      net_core:
+        ipv4_address: 172.28.200.51
+      net_replica:
+        ipv4_address: 172.28.201.30
+    restart: unless-stopped
+
+  prestamos-svc:
+    build:
+      context: ../backend
+      dockerfile: services/prestamos/Dockerfile
+    container_name: prestamos-svc
+    environment:
+      <<: *app-env
+    depends_on:
+      core-db:
+        condition: service_healthy
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.22
+      net_core:
+        ipv4_address: 172.28.200.52
+    restart: unless-stopped
+
+  auditoria-svc:
+    build:
+      context: ../backend
+      dockerfile: services/auditoria/Dockerfile
+    container_name: auditoria-svc
+    environment:
+      <<: *app-env
+    depends_on:
+      core-db:
+        condition: service_healthy
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.23
+      net_core:
+        ipv4_address: 172.28.200.53
+    restart: unless-stopped
+
+  sync-svc:
+    build:
+      context: ../backend
+      dockerfile: services/sync/Dockerfile
+    container_name: sync-svc
+    environment:
+      <<: *app-env
+      MONGO_HOST: contingencia-db
+      MONGO_PORT: 27017
+      MONGO_DB: contingencia_coop
+      PROMETHEUS_URL: http://monitoreo:9090
+    depends_on:
+      core-db:
+        condition: service_healthy
+      contingencia-db:
+        condition: service_healthy
+      monitoreo:
+        condition: service_started
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.24
+      net_core:
+        ipv4_address: 172.28.200.54
+      net_contingencia:
+        ipv4_address: 172.28.230.30
+      net_monitoreo:
+        ipv4_address: 172.28.220.40
+    restart: unless-stopped
+
+  banca-web:
+    build:
+      context: ../frontend/banca-web
+      dockerfile: Dockerfile
+    container_name: banca-web
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.30
+    restart: unless-stopped
+
+  cajas-web:
+    build:
+      context: ../frontend/cajas
+      dockerfile: Dockerfile
+    container_name: cajas-web
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.31
+    restart: unless-stopped
+
+  dashboard-sbs:
+    build:
+      context: ../frontend/dashboard-sbs
+      dockerfile: Dockerfile
+    container_name: dashboard-sbs
+    networks:
+      net_app:
+        ipv4_address: 172.28.240.32
+    restart: unless-stopped
+
+networks:
+  net_app:
+    name: coop_net_app
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.240.0/24

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Arquitectura Avanzada - Cooperativa RyPC</title>
+    <!-- Tailwind CSS para diseño moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Iconos FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Estilos de animación para simulación de flujos */
+        @keyframes pulse-flow {
+            0% { stroke-dashoffset: 32; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .active-flow {
+            stroke-dasharray: 8, 8;
+            animation: pulse-flow 1.2s linear infinite;
+        }
+        .failover-flow {
+            stroke-dasharray: 6, 6;
+            animation: pulse-flow 0.6s linear infinite;
+        }
+        /* Transiciones suaves */
+        .transition-all-300 {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header Principal -->
+    <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur px-6 py-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-emerald-600/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                    <i class="fa-solid fa-network-wired text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg md:text-2xl tracking-tight text-white flex items-center gap-2">
+                        Arquitectura Tecnológica <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/20">Híbrida & Segura PC3</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Core Bancario de Alta Disponibilidad • 50,000 Socios Activos</p>
+                </div>
+            </div>
+            
+            <!-- Selector de Diagramas -->
+            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800 self-stretch md:self-auto">
+                <button onclick="switchTab('network')" id="btn-tab-network" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 bg-emerald-600 text-white shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-diagram-project"></i> Topología de Red Completa
+                </button>
+                <button onclick="switchTab('layered')" id="btn-tab-layered" class="flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 text-slate-400 hover:text-white flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Arquitectura por Capas
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal de la App -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+        
+        <!-- Panel Izquierdo / Controles e Instructivos de Simulación -->
+        <div class="lg:col-span-1 flex flex-col gap-5">
+            <!-- Tarjeta de Estado del Sistema -->
+            <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                    Estado del Entorno
+                    <span id="system-badge" class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                </h2>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-300">Modo de Operación:</span>
+                        <span id="mode-text" class="text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">NORMAL (SD-WAN NUBE)</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-300">Canal WAN Principal:</span>
+                        <span id="isp-primary-status" class="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i> Win Dedicado (400M)
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-300">Canal WAN Secundario:</span>
+                        <span id="isp-backup-status" class="text-xs font-semibold text-slate-400">
+                            Claro Backup (Listo)
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-slate-300">Replicación Core:</span>
+                        <span class="text-xs font-mono font-bold text-sky-400 flex items-center gap-1">
+                            <i class="fa-solid fa-rotate"></i> Asíncrona Activa
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Interactiva -->
+                <div class="mt-5 pt-5 border-t border-slate-800 space-y-3">
+                    <p class="text-xs font-medium text-slate-400 mb-2">Acciones del Simulador:</p>
+                    <button id="btn-sim-trx" onclick="simulateTransaction()" class="w-full bg-slate-900 hover:bg-slate-850 text-slate-100 border border-slate-700 hover:border-slate-600 py-3 px-4 rounded-xl text-xs font-bold transition-all-300 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> Simular Transacción
+                    </button>
+                    <button id="btn-toggle-failover" onclick="toggleFailover()" class="w-full bg-red-950/40 hover:bg-red-900/30 text-red-200 border border-red-500/30 py-3 px-4 rounded-xl text-xs font-bold transition-all-300 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plug-circle-xmark text-red-400"></i> Cortar Red WAN Principal (Failover)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Panel de Detalles Dinámico -->
+            <div id="details-card" class="bg-slate-900/50 p-5 rounded-2xl border border-slate-800 shadow-xl flex-grow flex flex-col justify-between min-h-[250px]">
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <span id="details-icon" class="text-lg text-emerald-400 bg-emerald-500/10 p-1.5 rounded border border-emerald-500/20">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </span>
+                        <h3 id="details-title" class="font-bold text-white text-sm">Explora la Arquitectura</h3>
+                    </div>
+                    <div id="details-body" class="text-xs text-slate-400 space-y-3 leading-relaxed">
+                        <p>Haz clic en cualquier elemento interactivo de la topología o en las capas del software para inspeccionar las especificaciones técnicas mejoradas basadas en el análisis real.</p>
+                        <p class="bg-slate-950 p-3 rounded-lg border border-slate-850">
+                            <i class="fa-solid fa-circle-question text-sky-400 mr-1"></i> <strong>Pistas:</strong> Observa la segmentación interna por VLANs en las sedes y la alta disponibilidad de datos relacionales en la nube.
+                        </p>
+                    </div>
+                </div>
+                <div id="details-footer" class="text-[10px] text-slate-500 mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                    <span>Cooperativa RyPC • Informe PC3</span>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Central / Espacio de visualización de los diagramas -->
+        <div class="lg:col-span-3 flex flex-col gap-4">
+            
+            <!-- Vista de Topología de Red -->
+            <div id="view-network" class="bg-slate-900/20 p-4 md:p-6 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[620px]">
+                <div>
+                    <h3 class="text-white font-bold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-circle-nodes text-emerald-400"></i> Topología de Red Híbrida Completa (SD-WAN & Resiliencia Multi-AZ)
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Interconexión física y segmentación de datos local frente a la redundancia distribuida Huawei Cloud</p>
+                </div>
+
+                <!-- Canvas SVG Interactivo -->
+                <div class="w-full flex justify-center items-center py-4 bg-slate-900/50 rounded-xl border border-slate-850/80">
+                    <svg viewBox="0 0 950 580" class="w-full max-w-[920px] h-auto drop-shadow-xl select-none" xmlns="http://www.w3.org/2000/svg">
+                        
+                        <!-- DEFINICIONES DE FILTROS Y ESTILOS -->
+                        <defs>
+                            <!-- Sombras -->
+                            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+                                <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#020617" flood-opacity="0.8" />
+                            </filter>
+                            <!-- Degradados -->
+                            <linearGradient id="cloud-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#090d16" />
+                                <stop offset="100%" stop-color="#111827" />
+                            </linearGradient>
+                            <linearGradient id="hq-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#022c22" />
+                                <stop offset="100%" stop-color="#111827" />
+                            </linearGradient>
+                        </defs>
+
+                        <!-- ENLACES / CANALES WAN SD-WAN REDUNDANTES -->
+                        <!-- CHICLAYO -> CLOUD (Win Principal & Claro Backup) -->
+                        <path id="link-chiclayo-win" d="M 140 370 L 415 150" stroke="#10b981" stroke-width="2" fill="none" opacity="0.8" />
+                        <path id="flow-chiclayo-win" class="active-flow" d="M 140 370 L 415 150" stroke="#34d399" stroke-width="2.5" fill="none" opacity="0" />
+                        
+                        <path id="link-chiclayo-claro" d="M 140 370 L 415 150" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3" fill="none" opacity="0" />
+                        <path id="flow-chiclayo-claro" class="failover-flow" d="M 140 370 L 415 150" stroke="#fca5a5" stroke-width="2" fill="none" opacity="0" />
+
+                        <!-- AREQUIPA -> CLOUD (Win Principal & Claro Backup) -->
+                        <path id="link-arequipa-win" d="M 810 370 L 445 150" stroke="#10b981" stroke-width="2" fill="none" opacity="0.8" />
+                        <path id="flow-arequipa-win" class="active-flow" d="M 810 370 L 445 150" stroke="#34d399" stroke-width="2.5" fill="none" opacity="0" />
+
+                        <path id="link-arequipa-claro" d="M 810 370 L 445 150" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3" fill="none" opacity="0" />
+                        <path id="flow-arequipa-claro" class="failover-flow" d="M 810 370 L 445 150" stroke="#fca5a5" stroke-width="2" fill="none" opacity="0" />
+
+                        <!-- LIMA -> CLOUD (Win Principal & Claro Backup) -->
+                        <path id="link-lima-win" d="M 475 350 L 430 150" stroke="#10b981" stroke-width="3" fill="none" opacity="0.8" />
+                        <path id="flow-lima-win" class="active-flow" d="M 475 350 L 430 150" stroke="#34d399" stroke-width="3.5" fill="none" opacity="0" />
+
+                        <path id="link-lima-claro" d="M 475 350 L 430 150" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" fill="none" opacity="0" />
+                        <path id="flow-lima-claro" class="failover-flow" d="M 475 350 L 430 150" stroke="#fca5a5" stroke-width="2.5" fill="none" opacity="0" />
+
+                        <!-- NUBE HUAWEI CLOUD (Cúpula Ampliada) -->
+                        <g transform="translate(110, 20)" class="cursor-pointer" onclick="showComponent('cloud_hcloud')" filter="url(#shadow)">
+                            <rect x="0" y="0" width="730" height="200" rx="16" fill="url(#cloud-grad)" stroke="#1e1b4b" stroke-width="2" />
+                            <rect id="cloud-border" x="0" y="0" width="730" height="200" rx="16" fill="none" stroke="#6366f1" stroke-width="1.5" class="transition-all-300" />
+                            
+                            <!-- Cabecera de Nube -->
+                            <path d="M 30,30 a 10,10 0 0,1 20,-5 a 15,15 0 0,1 25,12 a 10,10 0 0,1 -5,12 Z" fill="#818cf8" opacity="0.7" />
+                            <text x="75" y="38" fill="#ffffff" font-size="12" font-weight="800">HUAWEI CLOUD (NODO PERÚ)</text>
+                            <text x="75" y="52" fill="#818cf8" font-size="9" font-weight="600">Alta Disponibilidad & Baja Latencia (&lt;30ms)</text>
+
+                            <!-- Balanceador de Carga ELB -->
+                            <g transform="translate(320, 45)" id="cloud-elb">
+                                <rect x="0" y="0" width="80" height="28" rx="6" fill="#1e1b4b" stroke="#38bdf8" stroke-width="1" />
+                                <text x="40" y="17" text-anchor="middle" fill="#38bdf8" font-size="9" font-weight="800">ELB Balancer</text>
+                            </g>
+
+                            <!-- Zona de Disponibilidad 1 (AZ 1 - Líder) -->
+                            <g transform="translate(40, 75)">
+                                <rect x="0" y="0" width="190" height="110" rx="10" fill="#030712" stroke="#10b981" stroke-width="1.5" />
+                                <text x="12" y="20" fill="#34d399" font-size="8" font-weight="800">ZONA DISPONIBILIDAD 1 (AZ1)</text>
+                                
+                                <!-- SRV-CoreBancario -->
+                                <g transform="translate(15, 35)">
+                                    <rect x="0" y="0" width="160" height="30" rx="5" fill="#111827" stroke="#34d399" stroke-width="1" />
+                                    <text x="12" y="18" fill="#e2e8f0" font-size="8" font-weight="700">SRV-CoreBancario (PostgreSQL)</text>
+                                    <circle cx="145" cy="15" r="4" fill="#10b981" />
+                                </g>
+                                <!-- ECS Compute -->
+                                <g transform="translate(15, 72)">
+                                    <rect x="0" y="0" width="160" height="26" rx="5" fill="#111827" stroke="#4b5563" stroke-width="1" />
+                                    <text x="12" y="16" fill="#9ca3af" font-size="8" font-weight="600">ECS Compute Node</text>
+                                </g>
+                            </g>
+
+                            <!-- Zona de Disponibilidad 2 (AZ 2 - Réplica) -->
+                            <g transform="translate(255, 75)">
+                                <rect x="0" y="0" width="190" height="110" rx="10" fill="#030712" stroke="#10b981" stroke-width="1" stroke-dasharray="3,3" />
+                                <text x="12" y="20" fill="#9ca3af" font-size="8" font-weight="800">ZONA DISPONIBILIDAD 2 (AZ2)</text>
+                                
+                                <!-- SRV-Data-Replica -->
+                                <g transform="translate(15, 35)">
+                                    <rect x="0" y="0" width="160" height="30" rx="5" fill="#111827" stroke="#60a5fa" stroke-width="1" />
+                                    <text x="12" y="18" fill="#93c5fd" font-size="8" font-weight="700">SRV-Data-Replica (Read-Only)</text>
+                                    <circle cx="145" cy="15" r="4" fill="#3b82f6" />
+                                </g>
+                                <!-- Flecha de Replicación Síncrona -->
+                                <path d="M -15,50 L 15,50" stroke="#60a5fa" stroke-width="1.5" fill="none" marker-end="url(#arrow)" stroke-dasharray="2,2" />
+                            </g>
+
+                            <!-- Entorno MongoDB Aislado (Zero Trust) -->
+                            <g transform="translate(470, 75)">
+                                <rect x="0" y="0" width="220" height="110" rx="10" fill="#020617" stroke="#f43f5e" stroke-width="1.5" />
+                                <text x="12" y="20" fill="#fca5a5" font-size="8" font-weight="800">ENTORNO SEGURIDAD AISLADO (Zero Trust)</text>
+                                
+                                <!-- SRV-Contingencia (MongoDB) -->
+                                <g transform="translate(15, 35)">
+                                    <rect x="0" y="0" width="190" height="30" rx="5" fill="#111827" stroke="#f43f5e" stroke-width="1" />
+                                    <text x="10" y="18" fill="#fda4af" font-size="8" font-weight="700">SRV-Contingencia (MongoDB NoSQL)</text>
+                                    <circle cx="175" cy="15" r="4" fill="#f43f5e" />
+                                </g>
+                                
+                                <!-- SRV-Monitoreo (Prometheus) -->
+                                <g transform="translate(15, 72)">
+                                    <rect x="0" y="0" width="190" height="26" rx="5" fill="#111827" stroke="#eab308" stroke-width="1" />
+                                    <text x="10" y="16" fill="#fef08a" font-size="8" font-weight="700">SRV-Monitoreo (Prometheus / Zabbix)</text>
+                                </g>
+                            </g>
+                        </g>
+
+                        <!-- SEDE LIMA (CENTRAL) -->
+                        <g transform="translate(290, 310)" class="cursor-pointer" onclick="showComponent('sede_lima')" filter="url(#shadow)">
+                            <rect x="0" y="0" width="370" height="235" rx="16" fill="url(#hq-grad)" stroke="#065f46" stroke-width="2" />
+                            <rect id="lima-border" x="0" y="0" width="370" height="235" rx="16" fill="none" stroke="#10b981" stroke-width="1.5" />
+                            
+                            <!-- Cabecera -->
+                            <text x="20" y="28" fill="#ffffff" font-size="12" font-weight="800">SEDE CENTRAL LIMA (PRINCIPAL)</text>
+                            <text x="20" y="42" fill="#34d399" font-size="8" font-weight="600">Datacenter Local & Administración</text>
+
+                            <!-- Perímetro FortiGate 60F -->
+                            <g transform="translate(20, 60)">
+                                <rect x="0" y="0" width="140" height="30" rx="4" fill="#1e1b4b" stroke="#ef4444" stroke-width="1.5" />
+                                <text x="70" y="18" text-anchor="middle" fill="#fca5a5" font-size="8" font-weight="700">FortiGate 60F (SD-WAN)</text>
+                            </g>
+
+                            <!-- Aruba Switch 1930 -->
+                            <g transform="translate(190, 60)">
+                                <rect x="0" y="0" width="160" height="30" rx="4" fill="#111827" stroke="#f59e0b" stroke-width="1.5" />
+                                <text x="80" y="18" text-anchor="middle" fill="#fde047" font-size="8" font-weight="700">Switch Aruba 1930 (Capa 3)</text>
+                            </g>
+
+                            <!-- Cableado FortiGate -> Aruba -->
+                            <path d="M 160,75 L 190,75" stroke="#f59e0b" stroke-width="1.5" fill="none" />
+
+                            <!-- Servidor Físico PowerEdge T360 -->
+                            <g transform="translate(20, 110)">
+                                <rect x="0" y="0" width="330" height="40" rx="6" fill="#030712" stroke="#3b82f6" stroke-width="1.5" />
+                                <text x="15" y="24" fill="#93c5fd" font-size="9" font-weight="800">Dell PowerEdge T360 (Backup local - RAID 10 SSD)</text>
+                                <text x="250" y="24" fill="#60a5fa" font-size="7" font-weight="500">64GB RAM ECC</text>
+                            </g>
+
+                            <!-- Segmentación VLANs locales -->
+                            <g transform="translate(20, 165)">
+                                <rect x="0" y="0" width="330" height="55" rx="6" fill="#0f172a" stroke="#475569" stroke-width="1" />
+                                <text x="12" y="15" fill="#94a3b8" font-size="8" font-weight="700">SEGMENTACIÓN DE RED INTERNA (VLANs)</text>
+                                
+                                <!-- VLAN 10 (Cajas) -->
+                                <g transform="translate(12, 25)">
+                                    <rect x="0" y="0" width="90" height="20" rx="3" fill="#111827" stroke="#10b981" stroke-width="0.75" />
+                                    <text x="45" y="13" text-anchor="middle" fill="#34d399" font-size="7" font-weight="700">VLAN 10 (Cajas)</text>
+                                </g>
+                                <!-- VLAN 20 (Back-Office) -->
+                                <g transform="translate(115, 25)">
+                                    <rect x="0" y="0" width="100" height="20" rx="3" fill="#111827" stroke="#3b82f6" stroke-width="0.75" />
+                                    <text x="50" y="13" text-anchor="middle" fill="#93c5fd" font-size="7" font-weight="700">VLAN 20 (BackOffice)</text>
+                                </g>
+                                <!-- VLAN 30 (Gerencia) -->
+                                <g transform="translate(225, 25)">
+                                    <rect x="0" y="0" width="90" height="20" rx="3" fill="#111827" stroke="#eab308" stroke-width="0.75" />
+                                    <text x="45" y="13" text-anchor="middle" fill="#fef08a" font-size="7" font-weight="700">VLAN 30 (Gerencia)</text>
+                                </g>
+                            </g>
+                        </g>
+
+                        <!-- SEDE CHICLAYO -->
+                        <g transform="translate(30, 310)" class="cursor-pointer" onclick="showComponent('sede_chiclayo')" filter="url(#shadow)">
+                            <rect x="0" y="0" width="220" height="235" rx="12" fill="#070a13" stroke="#334155" stroke-width="2" />
+                            <rect id="chiclayo-border" x="0" y="0" width="220" height="235" rx="12" fill="none" stroke="#475569" stroke-width="1.5" />
+                            
+                            <text x="15" y="24" fill="#ffffff" font-size="10" font-weight="800">SUCURSAL CHICLAYO</text>
+                            <text x="15" y="36" fill="#64748b" font-size="7" font-weight="600">Agencia Regional Norte</text>
+
+                            <!-- FortiGate -->
+                            <g transform="translate(15, 55)">
+                                <rect x="0" y="0" width="190" height="26" rx="4" fill="#111827" stroke="#ef4444" stroke-width="1" />
+                                <text x="95" y="16" text-anchor="middle" fill="#fca5a5" font-size="7" font-weight="700">FortiGate 60F</text>
+                            </g>
+                            <!-- Aruba Switch -->
+                            <g transform="translate(15, 95)">
+                                <rect x="0" y="0" width="190" height="26" rx="4" fill="#111827" stroke="#f59e0b" stroke-width="1" />
+                                <text x="95" y="16" text-anchor="middle" fill="#fde047" font-size="7" font-weight="700">Aruba 1930</text>
+                            </g>
+                            
+                            <!-- VLAN Segmentación -->
+                            <g transform="translate(15, 140)">
+                                <rect x="0" y="0" width="190" height="80" rx="5" fill="#0f172a" stroke="#334155" stroke-width="0.75" />
+                                <text x="10" y="15" fill="#94a3b8" font-size="7" font-weight="700">VLANs Locales Segmentadas</text>
+                                
+                                <g transform="translate(10, 25)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#10b981" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#34d399" font-size="6" font-weight="700">VLAN 10 (Cajas Ventanilla)</text>
+                                </g>
+                                <g transform="translate(10, 43)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#3b82f6" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#93c5fd" font-size="6" font-weight="700">VLAN 20 (BackOffice)</text>
+                                </g>
+                                <g transform="translate(10, 61)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#eab308" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#fef08a" font-size="6" font-weight="700">VLAN 30 (Gerencia)</text>
+                                </g>
+                            </g>
+                        </g>
+
+                        <!-- SEDE AREQUIPA -->
+                        <g transform="translate(700, 310)" class="cursor-pointer" onclick="showComponent('sede_arequipa')" filter="url(#shadow)">
+                            <rect x="0" y="0" width="220" height="235" rx="12" fill="#070a13" stroke="#334155" stroke-width="2" />
+                            <rect id="arequipa-border" x="0" y="0" width="220" height="235" rx="12" fill="none" stroke="#475569" stroke-width="1.5" />
+                            
+                            <text x="15" y="24" fill="#ffffff" font-size="10" font-weight="800">SUCURSAL AREQUIPA</text>
+                            <text x="15" y="36" fill="#64748b" font-size="7" font-weight="600">Agencia Regional Sur</text>
+
+                            <!-- FortiGate -->
+                            <g transform="translate(15, 55)">
+                                <rect x="0" y="0" width="190" height="26" rx="4" fill="#111827" stroke="#ef4444" stroke-width="1" />
+                                <text x="95" y="16" text-anchor="middle" fill="#fca5a5" font-size="7" font-weight="700">FortiGate 60F</text>
+                            </g>
+                            <!-- Aruba Switch -->
+                            <g transform="translate(15, 95)">
+                                <rect x="0" y="0" width="190" height="26" rx="4" fill="#111827" stroke="#f59e0b" stroke-width="1" />
+                                <text x="95" y="16" text-anchor="middle" fill="#fde047" font-size="7" font-weight="700">Aruba 1930</text>
+                            </g>
+                            
+                            <!-- VLAN Segmentación -->
+                            <g transform="translate(15, 140)">
+                                <rect x="0" y="0" width="190" height="80" rx="5" fill="#0f172a" stroke="#334155" stroke-width="0.75" />
+                                <text x="10" y="15" fill="#94a3b8" font-size="7" font-weight="700">VLANs Locales Segmentadas</text>
+                                
+                                <g transform="translate(10, 25)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#10b981" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#34d399" font-size="6" font-weight="700">VLAN 10 (Cajas Ventanilla)</text>
+                                </g>
+                                <g transform="translate(10, 43)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#3b82f6" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#93c5fd" font-size="6" font-weight="700">VLAN 20 (BackOffice)</text>
+                                </g>
+                                <g transform="translate(10, 61)">
+                                    <rect x="0" y="0" width="170" height="15" rx="2" fill="#111827" stroke="#eab308" stroke-width="0.5" />
+                                    <text x="85" y="10" text-anchor="middle" fill="#fef08a" font-size="6" font-weight="700">VLAN 30 (Gerencia)</text>
+                                </g>
+                            </g>
+                        </g>
+
+                        <!-- MARCADOR DE RUTAS WAN / SD-WAN (Win Principal y Claro Backup) -->
+                        <g transform="translate(230, 255)">
+                            <text fill="#34d399" font-size="7" font-weight="800">WIN Fibra 1:1</text>
+                            <text y="8" fill="#ef4444" font-size="6" font-weight="700">CLARO Backup (SD-WAN)</text>
+                        </g>
+                        <g transform="translate(630, 255)">
+                            <text fill="#34d399" font-size="7" font-weight="800">WIN Fibra 1:1</text>
+                            <text y="8" fill="#ef4444" font-size="6" font-weight="700">CLARO Backup (SD-WAN)</text>
+                        </g>
+                    </svg>
+                </div>
+
+                <!-- Leyenda Rápida -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-4 text-[10px] text-slate-400 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Enlace Principal WIN (Activo)</div>
+                    <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-red-500 animate-pulse"></span> Backup CLARO / Zero Trust Contingencia</div>
+                    <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Base de Datos PostgreSQL/MongoDB</div>
+                    <div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-yellow-500"></span> Switches Aruba / Segmentación VLAN</div>
+                </div>
+            </div>
+
+            <!-- Vista de Arquitectura por Capas -->
+            <div id="view-layered" class="hidden bg-slate-900/20 p-4 md:p-6 rounded-2xl border border-slate-800 shadow-2xl min-h-[620px] flex flex-col justify-between">
+                <div>
+                    <h3 class="text-white font-bold text-base flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-emerald-400"></i> Diagrama de Software y Sistemas por Capas (Modelo Robusto)
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-6">División estricta de responsabilidades lógicas para cumplimiento de normativas financieras (SBS)</p>
+                </div>
+
+                <!-- Capas en Bloques de Tarjetas Interactivos -->
+                <div class="space-y-3.5 my-auto">
+                    
+                    <!-- Capa 1: Presentación -->
+                    <div onclick="showLayer('presentation')" class="group cursor-pointer bg-slate-900/70 hover:bg-slate-850 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-all-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-lg group-hover:bg-emerald-500/20 transition-all-300">
+                                <i class="fa-solid fa-desktop text-lg"></i>
+                            </span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200 group-hover:text-emerald-300 transition-all-300">CAPA 1: PRESENTACIÓN (CLIENTE & CANALES)</h4>
+                                <p class="text-xs text-slate-400">Plataformas nativas e internas optimizadas para socios y personal operativo</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 self-stretch md:self-auto">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">App (React Native)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Web (React + TS)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Cajas (Angular)</span>
+                        </div>
+                    </div>
+
+                    <!-- Capa 2: Comunicación y Acceso (API Gateway) -->
+                    <div onclick="showLayer('access')" class="group cursor-pointer bg-slate-900/70 hover:bg-slate-850 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-all-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-lg group-hover:bg-cyan-500/20 transition-all-300">
+                                <i class="fa-solid fa-shield-halved text-lg"></i>
+                            </span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200 group-hover:text-cyan-300 transition-all-300">CAPA 2: ACCESO, SEGURIDAD & PERÍMETRO</h4>
+                                <p class="text-xs text-slate-400">Capa intermedia para control de accesos, microsegmentación y aislamiento Zero Trust</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 self-stretch md:self-auto">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Políticas Zero Trust</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">API Gateway</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Filtro JWT</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Rate Limiting</span>
+                        </div>
+                    </div>
+
+                    <!-- Capa 3: Aplicación / Lógica de Negocio -->
+                    <div onclick="showLayer('application')" class="group cursor-pointer bg-slate-900/70 hover:bg-slate-850 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-all-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="p-2.5 bg-indigo-500/10 text-indigo-400 rounded-lg group-hover:bg-indigo-500/20 transition-all-300">
+                                <i class="fa-solid fa-gears text-lg"></i>
+                            </span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200 group-hover:text-indigo-300 transition-all-300">CAPA 3: APLICACIÓN / LÓGICA (FASTAPI)</h4>
+                                <p class="text-xs text-slate-400">Motores asíncronos y auditoría de eventos de cumplimiento regulatorio</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 self-stretch md:self-auto">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Python 3.11 + FastAPI</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Pydantic</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Auditoría SBS N° 504</span>
+                        </div>
+                    </div>
+
+                    <!-- Capa 4: Persistencia de Datos -->
+                    <div onclick="showLayer('data')" class="group cursor-pointer bg-slate-900/70 hover:bg-slate-850 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-all-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="p-2.5 bg-blue-500/10 text-blue-400 rounded-lg group-hover:bg-blue-500/20 transition-all-300">
+                                <i class="fa-solid fa-database text-lg"></i>
+                            </span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200 group-hover:text-blue-300 transition-all-300">CAPA 4: PERSISTENCIA HÍBRIDA DE DATOS</h4>
+                                <p class="text-xs text-slate-400">Esquema robusto con replicación activa en nube, failover local y RAID 10 SSD</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 self-stretch md:self-auto">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Postgres Cloud (Líder)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">Postgres (Réplica AZ2)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">Mongo (Contingencia)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">RAID 10 local</span>
+                        </div>
+                    </div>
+
+                    <!-- Capa 5: Infraestructura -->
+                    <div onclick="showLayer('infrastructure')" class="group cursor-pointer bg-slate-900/70 hover:bg-slate-850 p-4 rounded-xl border border-slate-800 hover:border-emerald-500/30 transition-all-300 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex items-start gap-3.5">
+                            <span class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg group-hover:bg-amber-500/20 transition-all-300">
+                                <i class="fa-solid fa-server text-lg"></i>
+                            </span>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-200 group-hover:text-amber-300 transition-all-300">CAPA 5: INFRAESTRUCTURA DE CÓMPUTO & RESPALDO</h4>
+                                <p class="text-xs text-slate-400">Instancias elásticas Huawei Cloud y resguardo de energía local de doble conversión</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 self-stretch md:self-auto">
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Huawei ECS (Perú)</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">PowerEdge T360</span>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded bg-slate-800 text-slate-300 border border-slate-700">Vertiv Liebert UPS</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="text-[10px] text-slate-400 text-center bg-slate-900 p-3 rounded-xl border border-slate-800/80 mt-4">
+                    <i class="fa-solid fa-circle-info text-sky-400 mr-1"></i> Puedes hacer clic en cualquiera de las capas de software para ver la explicación analítica de sus tecnologías en el panel lateral.
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer General -->
+    <footer class="border-t border-slate-800 bg-slate-950 py-4 px-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>Diseño de Arquitectura de Sistemas • Herramienta de Visualización Interactiva Mejorada</p>
+            <p class="flex items-center gap-1"><i class="fa-solid fa-copyright"></i> 2026 • Redes e Infraestructura Híbrida de Alta Disponibilidad RyPC</p>
+        </div>
+    </footer>
+
+    <!-- LÓGICA DE CONTROL DE LA INTERFAZ -->
+    <script>
+        // Estado Global del Simulador
+        let isFailoverActive = false;
+        let isSimulating = false;
+
+        // Base de Datos de Información de Componentes (Topología)
+        const componentDetails = {
+            cloud_hcloud: {
+                title: "Huawei Cloud (Nube Híbrida)",
+                icon: '<i class="fa-solid fa-cloud text-indigo-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p class="text-slate-300 font-semibold text-xs">Esquema Multi-AZ Core Bancario</p>
+                        <p><strong>Balanceador ELB:</strong> Punto único que distribuye la carga transaccional hacia el Core relacional.</p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>AZ 1 - Core PostgreSQL (Líder):</strong> Procesa el 100% de las transacciones (escrituras/lecturas críticas) garantizando consistencia inmediata en menos de 50ms.</li>
+                            <li><strong>AZ 2 - Data Réplica PostgreSQL (Lectura):</strong> Sincronización asíncrona constante para balancear las consultas de saldos de las sedes.</li>
+                            <li><strong>Zona Zero Trust MongoDB:</strong> NoSQL para contingencia aislada. Mantiene un script asíncrono para copias rápidas.</li>
+                            <li><strong>Prometheus / Zabbix:</strong> Monitoreo activo de latencias y estado de salud de puertos.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            sede_lima: {
+                title: "Sede Central (Lima - HQ)",
+                icon: '<i class="fa-solid fa-building text-emerald-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p class="text-slate-300 font-semibold text-xs">Datacenter Físico y Segmentación LAN Avanzada</p>
+                        <p><strong>Corta-fuego Borde:</strong> FortiGate 60F controlando la orquestación SD-WAN y VPNs.</p>
+                        <p><strong>Servidor Local:</strong> Dell PowerEdge T360 con 64GB RAM ECC y almacenamiento redundante RAID 10 para resiliencia on-premise.</p>
+                        <p><strong>Segmentación de Red Interna (VLANs):</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>VLAN 10:</strong> Terminales de Caja (Ventanillas de transacciones).</li>
+                            <li><strong>VLAN 20:</strong> Red de Back-Office (Cumplimiento SBS).</li>
+                            <li><strong>VLAN 30:</strong> Red Privada de Gerencia.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            sede_chiclayo: {
+                title: "Sucursal Chiclayo",
+                icon: '<i class="fa-solid fa-map-location-dot text-slate-300"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p class="text-slate-300 font-semibold text-xs">Agencia Norte Integrada por Hardware Dedicado</p>
+                        <p><strong>Perímetro local:</strong> FortiGate 60F acelerando el cifrado VPN IPsec por hardware con chip FortiASIC SOC4.</p>
+                        <p><strong>Switch de Distribución:</strong> HPE Aruba 1930 administrable administrando las VLANs de Cajas (V10), Back-Office (V20) y Gerencia (V30).</p>
+                        <p><strong>Redundancia WAN:</strong> Doble enlace Win (Fibra Óptica Dedicada 400M) + Claro Backup administrado por SD-WAN.</p>
+                    </div>
+                `
+            },
+            sede_arequipa: {
+                title: "Sucursal Arequipa",
+                icon: '<i class="fa-solid fa-map-location-dot text-slate-300"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p class="text-slate-300 font-semibold text-xs">Agencia Sur con Alta Disponibilidad Energética</p>
+                        <p><strong>Seguridad y Ruteo:</strong> Firewall FortiGate 60F conectado al Switch Aruba 1930.</p>
+                        <p><strong>VLAN Segmentación:</strong> Tráfico local aislado para cajas evitando movimientos laterales maliciosos dentro de la LAN.</p>
+                        <p><strong>Continuidad de Energía:</strong> Respaldado por UPS de Doble Conversión Vertiv Liebert GXT5 de 2000 VA para inmunidad eléctrica ante imprevistos.</p>
+                    </div>
+                `
+            }
+        };
+
+        // Base de Datos de Información de Capas (Software)
+        const layerDetails = {
+            presentation: {
+                title: "Capa de Presentación Mejorada",
+                icon: '<i class="fa-solid fa-desktop text-emerald-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p><strong>Definición del Frontend Multicanal:</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>App Banca Móvil (React Native):</strong> Compilación nativa fluida utilizando Virtual DOM para actualización de saldos instantáneos de socios.</li>
+                            <li><strong>Banca por Internet (React + TypeScript):</strong> Tipado estricto en el lado del cliente, evitando fallos lógicos antes del envío del paquete de datos.</li>
+                            <li><strong>Ventanillas (Angular + TypeScript):</strong> Sistema de enlace bidireccional (two-way binding) ideal para cajas con ~25 cajeros concurrentes.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            access: {
+                title: "Capa de Acceso, Microsegmentación & Zero Trust",
+                icon: '<i class="fa-solid fa-shield-halved text-cyan-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p><strong>Seguridad perimetral y de tránsito:</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>Políticas Zero Trust:</strong> Desconfianza por defecto en equipos internos y externos.</li>
+                            <li><strong>API Gateway Integrado:</strong> Valida tokens de sesión JWT, firmas criptográficas y evita inyecciones de código malicioso SQL.</li>
+                            <li><strong>Rate Limiting:</strong> Bloquea ataques de denegación de servicio (DoS) y asimila la concurrencia en quincenas o cierres contables.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            application: {
+                title: "Capa de Aplicación y Cumplimiento SBS",
+                icon: '<i class="fa-solid fa-gears text-indigo-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p><strong>Backend asíncrono y auditoría rígida:</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>Python 3.11 + FastAPI:</strong> Rendimiento masivo gracias al motor ASGI Starlette, procesando peticiones concurrentes mediante Async I/O sin bloqueos.</li>
+                            <li><strong>Módulo de Auditoría SBS N° 504-2021:</strong> Captura automática de eventos del Core de forma inalterable: ID del cajero/usuario, tipo de operación, marca de tiempo de milisegundos e IP lógica cliente.</li>
+                            <li><strong>Scoring Préstamos:</strong> API REST asíncrona integrada de forma directa con centrales de riesgo.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            data: {
+                title: "Capa de Persistencia de Datos Híbrida",
+                icon: '<i class="fa-solid fa-database text-blue-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p><strong>Estrategia de Datos y Tolerancia a Fallos:</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>PostgreSQL (Cloud - Core Líder):</strong> Transaccional principal para saldos (escribir/leer) con cumplimiento ácido total.</li>
+                            <li><strong>PostgreSQL (Cloud - Réplica Lectura):</strong> En AZ2 para aliviar consultas masivas de saldos e históricos.</li>
+                            <li><strong>MongoDB NoSQL (Contingencia):</strong> Instalado tanto en la nube como en el PowerEdge local de Lima para modo asilado sin conexión.</li>
+                            <li><strong>Arreglo de Discos RAID 10 SSD:</strong> Espejo (redundancia) y división de datos (velocidad) en discos locales tolerando falla de hasta 2 SSD concurrentes.</li>
+                        </ul>
+                    </div>
+                `
+            },
+            infrastructure: {
+                title: "Capa de Infraestructura y Redundancia Física",
+                icon: '<i class="fa-solid fa-server text-amber-400"></i>',
+                body: `
+                    <div class="space-y-2">
+                        <p><strong>Cómputo, Respaldo y Alimentación Eléctrica:</strong></p>
+                        <ul class="list-disc pl-4 space-y-1 text-[11px]">
+                            <li><strong>Huawei Cloud ECS (Perú):</strong> Servidores elásticos virtuales con baja latencia local certificada.</li>
+                            <li><strong>Dell PowerEdge T360:</strong> Servidor en torre físico local equipado con procesador Intel Xeon de 8 núcleos para contingencia.</li>
+                            <li><strong>UPS Vertiv Doble Conversión:</strong> Evita fluctuaciones eléctricas de la red nacional del Perú, asegurando continuidad y aislamiento en caso de apagones súbitos.</li>
+                        </ul>
+                    </div>
+                `
+            }
+        };
+
+        // Función para cambiar de Pestaña (Tabs)
+        function switchTab(tabId) {
+            const btnNetwork = document.getElementById('btn-tab-network');
+            const btnLayered = document.getElementById('btn-tab-layered');
+            const viewNetwork = document.getElementById('view-network');
+            const viewLayered = document.getElementById('view-layered');
+
+            if (tabId === 'network') {
+                btnNetwork.className = "flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 bg-emerald-600 text-white shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2";
+                btnLayered.className = "flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 text-slate-400 hover:text-white flex items-center justify-center gap-2";
+                viewNetwork.classList.remove('hidden');
+                viewLayered.classList.add('hidden');
+            } else {
+                btnLayered.className = "flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 bg-emerald-600 text-white shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2";
+                btnNetwork.className = "flex-1 md:flex-none px-5 py-2.5 rounded-lg text-sm font-semibold transition-all-300 text-slate-400 hover:text-white flex items-center justify-center gap-2";
+                viewLayered.classList.remove('hidden');
+                viewNetwork.classList.add('hidden');
+            }
+        }
+
+        // Función para mostrar detalles de Componentes de Topología
+        function showComponent(compId) {
+            const data = componentDetails[compId];
+            if (!data) return;
+
+            document.getElementById('details-title').innerText = data.title;
+            document.getElementById('details-icon').innerHTML = data.icon;
+            document.getElementById('details-body').innerHTML = data.body;
+
+            // Quitar bordes resaltados a otros
+            ['cloud-border', 'lima-border', 'chiclayo-border', 'arequipa-border'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.setAttribute('stroke-width', '1.5');
+            });
+
+            // Resaltar seleccionado
+            const activeBorderMap = {
+                cloud_hcloud: 'cloud-border',
+                sede_lima: 'lima-border',
+                sede_chiclayo: 'chiclayo-border',
+                sede_arequipa: 'arequipa-border'
+            };
+            const activeEl = document.getElementById(activeBorderMap[compId]);
+            if (activeEl) {
+                activeEl.setAttribute('stroke-width', '4');
+            }
+        }
+
+        // Función para mostrar detalles de las capas de Software
+        function showLayer(layerId) {
+            const data = layerDetails[layerId];
+            if (!data) return;
+
+            document.getElementById('details-title').innerText = data.title;
+            document.getElementById('details-icon').innerHTML = data.icon;
+            document.getElementById('details-body').innerHTML = data.body;
+        }
+
+        // Simulación: Iniciar flujo transaccional visual
+        function simulateTransaction() {
+            if (isSimulating) return;
+            isSimulating = true;
+
+            const btnTrx = document.getElementById('btn-sim-trx');
+            btnTrx.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Simulando...';
+            btnTrx.disabled = true;
+
+            const flowChiclayo = document.getElementById('flow-chiclayo-win');
+            const flowArequipa = document.getElementById('flow-arequipa-win');
+            const flowLima = document.getElementById('flow-lima-win');
+            
+            const flowClaroChiclayo = document.getElementById('flow-chiclayo-claro');
+            const flowClaroArequipa = document.getElementById('flow-arequipa-claro');
+            const flowClaroLima = document.getElementById('flow-lima-claro');
+
+            if (!isFailoverActive) {
+                // FLUJO NORMAL: Win Empresas es la Fibra principal (líneas verdes)
+                flowChiclayo.setAttribute('opacity', '1');
+                flowArequipa.setAttribute('opacity', '1');
+                flowLima.setAttribute('opacity', '1');
+
+                document.getElementById('details-title').innerText = "Transacción: Ruta Win Activa";
+                document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-spinner animate-spin text-emerald-400"></i>';
+                document.getElementById('details-body').innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-slate-300 font-semibold text-xs">Procesando sobre el Enlace Principal:</p>
+                        <p>1. Cajeros en VLAN 10 envían datos a través del Switch Aruba 1930.</p>
+                        <p>2. FortiGate 60F cifra el tráfico en IPsec y lo asimila en la Fibra dedicada de <strong>Win Empresas (400 Mbps)</strong>.</p>
+                        <p>3. El balanceador ELB recibe el tráfico y lo redirige a la <strong>AZ 1 (PostgreSQL Líder)</strong> de Huawei Cloud.</p>
+                        <p>4. Se dispara el log de auditoría SBS N° 504.</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    flowChiclayo.setAttribute('opacity', '0');
+                    flowArequipa.setAttribute('opacity', '0');
+                    flowLima.setAttribute('opacity', '0');
+                    
+                    document.getElementById('details-title').innerText = "Transacción Completada";
+                    document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                    document.getElementById('details-body').innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-emerald-400 font-bold text-xs">✓ Proceso Transaccional Exitoso</p>
+                            <p><strong>Canal de Persistencia:</strong> PostgreSQL Core en AZ 1 consolidado. Réplica asíncrona iniciada hacia la AZ 2 y copia local local exitosa en el PowerEdge local.</p>
+                            <p><strong>Latencia Promedio:</strong> ~1.8 ms en nodo local.</p>
+                        </div>
+                    `;
+                    btnTrx.innerHTML = '<i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> Simular Transacción';
+                    btnTrx.disabled = false;
+                    isSimulating = false;
+                }, 3500);
+
+            } else {
+                // FLUJO EN FAILOVER: Tráfico se redirige de forma automática por Claro Backup (líneas punteadas rojas)
+                flowClaroChiclayo.setAttribute('opacity', '1');
+                flowClaroArequipa.setAttribute('opacity', '1');
+                flowClaroLima.setAttribute('opacity', '1');
+
+                document.getElementById('details-title').innerText = "Transacción: Ruta Claro (Backup)";
+                document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-rose-400 animate-pulse"></i>';
+                document.getElementById('details-body').innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-rose-400 font-semibold text-xs">¡Orquestación SD-WAN Conmutando Tráfico!</p>
+                        <p>1. Se detecta el corte físico de Win Empresas.</p>
+                        <p>2. FortiGate 60F conmuta en milisegundos hacia el enlace redundante de <strong>Claro Backup</strong>.</p>
+                        <p>3. El paquete viaja cifrado en IPsec de Claro hacia el balanceador ELB, ingresando directamente a la nube.</p>
+                        <p>4. Ante caídas extremas, el PowerEdge local almacena un búfer en <strong>MongoDB NoSQL</strong>.</p>
+                    </div>
+                `;
+
+                setTimeout(() => {
+                    flowClaroChiclayo.setAttribute('opacity', '0');
+                    flowClaroArequipa.setAttribute('opacity', '0');
+                    flowClaroLima.setAttribute('opacity', '0');
+                    
+                    document.getElementById('details-title').innerText = "Transacción Guardada en Contingencia";
+                    document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-circle-check text-rose-400"></i>';
+                    document.getElementById('details-body').innerHTML = `
+                        <div class="space-y-2">
+                            <p class="text-rose-400 font-bold text-xs">✓ Transacción Completada por Respaldo</p>
+                            <p><strong>Canal de Emergencia:</strong> Activado con éxito. Se mantiene el Uptime del 99.90% exigido por la SBS al eludir el punto único de falla de WAN.</p>
+                        </div>
+                    `;
+                    btnTrx.innerHTML = '<i class="fa-solid fa-money-bill-transfer text-emerald-400"></i> Simular Transacción';
+                    btnTrx.disabled = false;
+                    isSimulating = false;
+                }, 3500);
+            }
+        }
+
+        // Simulación: Activar / Desactivar contingencia WAN
+        function toggleFailover() {
+            isFailoverActive = !isFailoverActive;
+
+            const btnFailover = document.getElementById('btn-toggle-failover');
+            const modeText = document.getElementById('mode-text');
+            const ispPrimary = document.getElementById('isp-primary-status');
+            const ispBackup = document.getElementById('isp-backup-status');
+            const badge = document.getElementById('system-badge');
+
+            // Enlaces normales en el SVG
+            const linkLimaWin = document.getElementById('link-lima-win');
+            const linkChiclayoWin = document.getElementById('link-chiclayo-win');
+            const linkArequipaWin = document.getElementById('link-arequipa-win');
+            
+            // Enlaces backup en el SVG
+            const linkLimaClaro = document.getElementById('link-lima-claro');
+            const linkChiclayoClaro = document.getElementById('link-chiclayo-claro');
+            const linkArequipaClaro = document.getElementById('link-arequipa-claro');
+
+            if (isFailoverActive) {
+                btnFailover.innerHTML = '<i class="fa-solid fa-network-wired text-emerald-400"></i> Restaurar Canal WAN Principal';
+                btnFailover.className = "w-full bg-emerald-950/40 hover:bg-emerald-900/30 text-emerald-200 border border-emerald-500/30 py-3 px-4 rounded-xl text-xs font-bold transition-all-300 flex items-center justify-center gap-2";
+                
+                modeText.innerText = "FAILOVER SD-WAN ACTIVO";
+                modeText.className = "text-xs font-bold px-2.5 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse";
+                
+                ispPrimary.innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-400"></i> Win Dedicado (Caído)';
+                ispPrimary.className = "text-xs font-bold text-red-400";
+
+                ispBackup.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i> Claro Backup (ACTIVO)';
+                ispBackup.className = "text-xs font-bold text-emerald-400";
+                
+                badge.className = "h-2.5 w-2.5 rounded-full bg-red-500 animate-ping";
+
+                // Visualmente simular corte de enlaces normales (Win) y encendido de Claro
+                linkLimaWin.setAttribute('stroke', '#475569');
+                linkChiclayoWin.setAttribute('stroke', '#475569');
+                linkArequipaWin.setAttribute('stroke', '#475569');
+
+                linkLimaClaro.setAttribute('opacity', '0.8');
+                linkChiclayoClaro.setAttribute('opacity', '0.8');
+                linkArequipaClaro.setAttribute('opacity', '0.8');
+
+                document.getElementById('details-title').innerText = "¡ALERTA WAN: CONMUTACIÓN POR SD-WAN!";
+                document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-red-400 animate-bounce"></i>';
+                document.getElementById('details-body').innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-red-400 font-bold text-xs">Simulación de Conmutación de Proveedores</p>
+                        <p>El enlace principal de Win de 400 Mbps ha fallado. El motor <strong>SD-WAN</strong> en los firewalls FortiGate 60F ha desviado el tráfico hacia la línea Claro de respaldo en menos de 1 segundo.</p>
+                        <p>Haz clic en <strong>"Simular Transacción"</strong> en este estado para ver cómo viajan los paquetes cifrados a través del túnel secundario de Claro.</p>
+                    </div>
+                `;
+            } else {
+                btnFailover.innerHTML = '<i class="fa-solid fa-plug-circle-xmark text-red-400"></i> Cortar Red WAN Principal (Failover)';
+                btnFailover.className = "w-full bg-red-950/40 hover:bg-red-900/30 text-red-200 border border-red-500/30 py-3 px-4 rounded-xl text-xs font-bold transition-all-300 flex items-center justify-center gap-2";
+                
+                modeText.innerText = "NORMAL (SD-WAN NUBE)";
+                modeText.className = "text-xs font-bold px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                
+                ispPrimary.innerHTML = '<i class="fa-solid fa-circle-check"></i> Win Dedicado (400M)';
+                ispPrimary.className = "text-xs font-bold text-emerald-400";
+
+                ispBackup.innerHTML = 'Claro Backup (Listo)';
+                ispBackup.className = "text-xs font-semibold text-slate-400";
+                
+                badge.className = "h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse";
+
+                // Restaurar enlaces normales
+                linkLimaWin.setAttribute('stroke', '#10b981');
+                linkChiclayoWin.setAttribute('stroke', '#10b981');
+                linkArequipaWin.setAttribute('stroke', '#10b981');
+
+                linkLimaClaro.setAttribute('opacity', '0');
+                linkChiclayoClaro.setAttribute('opacity', '0');
+                linkArequipaClaro.setAttribute('opacity', '0');
+
+                document.getElementById('details-title').innerText = "Rutas WAN Normalizadas";
+                document.getElementById('details-icon').innerHTML = '<i class="fa-solid fa-circle-check text-emerald-400"></i>';
+                document.getElementById('details-body').innerHTML = `
+                    <div class="space-y-2">
+                        <p class="text-emerald-400 font-semibold text-xs">Fibra Óptica Win Operativa</p>
+                        <p>La red ha conmutado nuevamente al canal prioritario de baja latencia con Win Empresas.</p>
+                        <p>Los procesos de sincronía y monitoreo transaccional se ejecutan sin desviaciones sobre la AZ 1 de la nube.</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

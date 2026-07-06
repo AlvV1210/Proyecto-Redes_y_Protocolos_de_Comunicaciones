@@ -1,0 +1,103 @@
+erDiagram
+    SEDE ||--o{ USUARIO : emplea
+    SEDE ||--o{ SOCIO : registra
+    SEDE ||--o{ EQUIPO_RED : contiene
+    ROL ||--o{ USUARIO : asigna
+    SOCIO ||--o{ CUENTA : posee
+    SOCIO ||--o{ PRESTAMO : solicita
+    CUENTA ||--o{ TRANSACCION : origen
+    CUENTA ||--o{ TRANSACCION : destino
+    PRESTAMO ||--o{ CUOTA_PRESTAMO : genera
+    USUARIO ||--o{ TRANSACCION : autoriza
+    USUARIO ||--o{ PRESTAMO : solicita_aprueba
+    USUARIO ||--o{ LOG_AUDITORIA : ejecuta
+    SEDE ||--o{ TRANSACCION : origen_operacion
+
+    SEDE {
+        int id PK
+        varchar nombre
+        varchar ciudad
+        varchar subnet_ipv4
+        boolean es_principal
+    }
+
+    ROL {
+        int id PK
+        varchar nombre_rol
+        varchar descripcion
+    }
+
+    USUARIO {
+        int id PK
+        varchar username
+        varchar email
+        varchar password_hash
+        int id_rol FK
+        int id_sede FK
+    }
+
+    SOCIO {
+        int id PK
+        char dni
+        varchar nombres
+        varchar apellidos
+        int id_sede FK
+    }
+
+    CUENTA {
+        int id PK
+        varchar numero_cuenta
+        tipo_cuenta tipo
+        numeric saldo
+        estado_cuenta estado
+        int id_socio FK
+    }
+
+    TRANSACCION {
+        int id PK
+        numeric monto
+        tipo_transaccion tipo
+        estado_transaccion estado
+        int id_cuenta_origen FK
+        int id_cuenta_destino FK
+        int id_usuario FK
+        int id_sede_origen FK
+    }
+
+    PRESTAMO {
+        int id PK
+        numeric monto
+        numeric tasa_interes
+        int plazo_meses
+        estado_prestamo estado
+        int id_socio FK
+        int id_usuario_aprobador FK
+    }
+
+    CUOTA_PRESTAMO {
+        int id PK
+        int id_prestamo FK
+        int numero_cuota
+        numeric monto
+        date fecha_vencimiento
+        boolean pagada
+    }
+
+    EQUIPO_RED {
+        int id PK
+        varchar nombre
+        varchar tipo
+        inet ip
+        int vlan
+        int id_sede FK
+    }
+
+    LOG_AUDITORIA {
+        int id PK
+        int id_usuario FK
+        varchar accion
+        varchar modulo
+        text detalle
+        inet ip_origen
+        timestamptz fecha_hora
+    }

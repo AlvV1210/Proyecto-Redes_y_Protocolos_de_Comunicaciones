@@ -1,0 +1,41 @@
+# Override para desarrollo local en Windows
+services:
+  core-db:
+    ports:
+      - "5432:5432"
+
+  gateway-auth:
+    ports:
+      - "8000:8000"
+
+  cuentas-svc:
+    ports:
+      - "8001:8001"
+
+  prestamos-svc:
+    ports:
+      - "8002:8002"
+
+  auditoria-svc:
+    ports:
+      - "8003:8003"
+
+  sync-svc:
+    ports:
+      - "8004:8004"
+
+  nginx-gateway:
+    ports:
+      - "80:80"
+
+  banca-web:
+    ports:
+      - "8888:80"
+
+  cajas-web:
+    ports:
+      - "8889:80"
+
+  dashboard-sbs:
+    ports:
+      - "8890:80"
